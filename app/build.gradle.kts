@@ -8,7 +8,8 @@ plugins {
 }
 
 dependencies {
-    // ksp(project(":core"))
+    ksp(project(":preprocessing"))
+    implementation(project(":core"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.serialization.kotlinx.json)

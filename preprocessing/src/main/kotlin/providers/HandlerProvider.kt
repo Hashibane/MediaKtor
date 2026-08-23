@@ -7,5 +7,5 @@ import processors.HandlerProcessor
 
 class HandlerProcessorProvider : SymbolProcessorProvider {
     override fun create(environment: SymbolProcessorEnvironment): SymbolProcessor
-            = HandlerProcessor(environment.codeGenerator)
+            = HandlerProcessor(environment.codeGenerator, environment.logger)
 }

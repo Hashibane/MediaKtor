@@ -8,11 +8,13 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
+import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ksp.toTypeName
 import errors.PreprocessingException
-import generators.HandlerGenerator.generateHandler
+import generators.generateHandler
+import generators.generateMediator
 import metadata.HandlerMetadata
 
 class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
@@ -25,6 +27,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
 
 
         handlerMetadata.forEach { codeGenerator.generateHandler(it) }
+        codeGenerator.generateMediator(handlerMetadata)
 
         // Very important not to loop
         handlerMetadata.clear()
@@ -32,7 +35,18 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         return emptyList()
     }
 
+    companion object {
+        var _id = 0
+        val id: Int
+            get() {
+                _id += 1
+                return _id
+            }
+    }
+
     inner class HandlerVisitor : KSVisitorVoid() {
+
+
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
@@ -47,9 +61,11 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
             val returnType = function.returnType ?: throw PreprocessingException("Error occured during the resolution" +
                     "of return type of handler $functionName.")
 
+            val packageName = function.packageName.asString()
             handlerMetadata.add(
                 HandlerMetadata(
-                    MemberName(function.packageName.asString(), functionName),
+                    MemberName(packageName, functionName),
+                    generatedClass = ClassName(packageName, "Handler__${functionName}__$id"),
                     inputType = requestArg.type.toTypeName(),
                     args = args.map {
                         val propName = it.name?.asString() ?: "_"

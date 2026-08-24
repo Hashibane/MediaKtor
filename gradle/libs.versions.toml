@@ -24,6 +24,7 @@ exposed-jdbc = { module = "org.jetbrains.exposed:exposed-jdbc", version.ref = "e
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+ktor-server-di = { module = "io.ktor:ktor-server-di", version.ref = "ktor" }
 
 # Libraries can be bundled together for easier import
 [bundles]

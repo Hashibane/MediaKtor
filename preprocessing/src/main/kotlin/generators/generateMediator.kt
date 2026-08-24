@@ -2,28 +2,24 @@ package generators
 
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.Dependencies
-import com.google.devtools.ksp.symbol.KSFile
-import com.squareup.kotlinpoet.ANY
-import com.squareup.kotlinpoet.ClassName
-import com.squareup.kotlinpoet.FileSpec
-import com.squareup.kotlinpoet.FunSpec
-import com.squareup.kotlinpoet.KModifier
-import com.squareup.kotlinpoet.LambdaTypeName
-import com.squareup.kotlinpoet.PropertySpec
-import com.squareup.kotlinpoet.TypeSpec
-import com.squareup.kotlinpoet.TypeVariableName
+import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.writeTo
-import processors.HandlerProcessor
-/*
-fun generateMediator(codeGenerator: CodeGenerator, handlers: List<TypeSpec, ClassName, KSFile>) {
+import metadata.HandlerMetadata
+
+fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>) {
     if (handlers.isEmpty()) return
+
+    val superInterface = ClassName("interfaces", "Mediator")
 
     val mediatorClassName = "Mediator__Impl"
     val mediatorBuilder = TypeSpec.classBuilder(mediatorClassName)
+        .addSuperinterface(superInterface)
 
     val constructorBuilder = FunSpec.constructorBuilder()
-    handlers.forEach { (_, className, _) ->
+    handlers.forEach {
         // Should be unique due to name generation
+        val className = it.generatedClass
         val propName = className.simpleName.lowercase()
 
         val lambdaType = LambdaTypeName.get(returnType = className).copy(suspending = true)
@@ -42,24 +38,24 @@ fun generateMediator(codeGenerator: CodeGenerator, handlers: List<TypeSpec, Clas
     val parameterName = "command"
 
     val invokeBuilder = FunSpec.builder("invoke")
-        .addModifiers(KModifier.SUSPEND)
+        .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE)
         .addTypeVariable(TypeVariableName("T", Any::class))
         .addParameter(parameterName, TypeVariableName("T"))
         .returns(ANY.copy(nullable = true))
         .beginControlFlow("return when (%L)", parameterName)
 
-    handlers.forEach { (typeName, className, _) ->
-        val propName = className.simpleName.lowercase()
+    handlers.forEach {
+        val propName = it.generatedClass.simpleName.lowercase()
 
-        invokeBuilder.beginControlFlow("is %T ->", typeName)
+        invokeBuilder.beginControlFlow("is %T ->", it.inputType)
             .addStatement("%L().handleRequest(%L)", propName, parameterName)
             .endControlFlow()
     }
 
 
-    val line = "throw IllegalArgumentException(\"No handler registered for command " + "$$parameterName" + "\")"
+    val line = "No handler registered for command $$parameterName"
     invokeBuilder
-        .addStatement("else -> %P", line)
+        .addStatement("else -> throw IllegalArgumentException(%P)", line)
         .endControlFlow()
 
     mediatorBuilder.addFunction(invokeBuilder.build())
@@ -68,15 +64,12 @@ fun generateMediator(codeGenerator: CodeGenerator, handlers: List<TypeSpec, Clas
         .addType(mediatorBuilder.build())
         .build()
 
-    val sourceFiles = handlers.flatMap { (_, _, file) -> file }
-    val namedSources = sourceFiles.toTypedArray()
-    val dependencies = if (namedSources.isNotEmpty()) {
-        Dependencies(aggregating = true, *namedSources)
+    val sourceFiles = handlers.filter { it.origin != null }.map { it.origin!! }.toTypedArray()
+    val dependencies = if (sourceFiles.isNotEmpty()) {
+        Dependencies(aggregating = true, *sourceFiles)
     } else {
         Dependencies.ALL_FILES
     }
 
-    fileSpec.writeTo(codeGenerator, dependencies)
+    fileSpec.writeTo(this, dependencies)
 }
-
- */

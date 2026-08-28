@@ -1,5 +1,6 @@
 package metadata
 
+import annotations.HandlerLifespan
 import com.google.devtools.ksp.symbol.KSFile
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
@@ -13,4 +14,5 @@ data class HandlerMetadata(
     val args: List<ParameterSpec>,
     val returnType: TypeName,
     val origin: KSFile?,
+    val lifecycle: HandlerLifespan
 )

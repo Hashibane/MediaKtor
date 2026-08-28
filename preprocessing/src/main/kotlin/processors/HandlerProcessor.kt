@@ -1,5 +1,6 @@
 package processors
 
+import annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
@@ -13,8 +14,10 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ksp.toTypeName
 import errors.PreprocessingException
+import generators.di.generateKtorDI
 import generators.generateHandler
 import generators.generateMediator
+import interfaces.RequestHandler
 import metadata.HandlerMetadata
 
 class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
@@ -25,9 +28,11 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
             .filter { it.validate() }
             .forEach { it.accept(HandlerVisitor(), Unit) }
 
-
         handlerMetadata.forEach { codeGenerator.generateHandler(it) }
-        codeGenerator.generateMediator(handlerMetadata)
+        val mediatorClass = codeGenerator.generateMediator(handlerMetadata)
+
+        if (mediatorClass != null)
+            codeGenerator.generateKtorDI(handlerMetadata, mediatorClass)
 
         // Very important not to loop
         handlerMetadata.clear()
@@ -45,8 +50,6 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
     }
 
     inner class HandlerVisitor : KSVisitorVoid() {
-
-
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
@@ -62,6 +65,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
                     "of return type of handler $functionName.")
 
             val packageName = function.packageName.asString()
+
             handlerMetadata.add(
                 HandlerMetadata(
                     MemberName(packageName, functionName),
@@ -75,9 +79,16 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
                     },
                     returnType = returnType.toTypeName(),
                     origin = function.containingFile,
+                    lifecycle = when (val lifecycle = function.annotations
+                        .find { it.shortName.asString() == RequestHandler::class.simpleName!! }
+                        ?.arguments?.first()?.value.toString()) {
+                        "HandlerLifespan.SINGLE" -> HandlerLifespan.SINGLE
+                        "HandlerLifespan.FACTORY" -> HandlerLifespan.FACTORY
+                        else -> throw PreprocessingException("Unknown lifecycle specifier $lifecycle on" +
+                                " function $functionName. Expected single or factory")
+                    }
                 )
             )
-
         }
     }
 }

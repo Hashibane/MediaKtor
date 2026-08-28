@@ -5,10 +5,11 @@ import com.google.devtools.ksp.processing.Dependencies
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import com.squareup.kotlinpoet.ksp.writeTo
+import generators.utils.handlerDependencies
 import metadata.HandlerMetadata
 
-fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>) {
-    if (handlers.isEmpty()) return
+fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): ClassName? {
+    if (handlers.isEmpty()) return null
 
     val superInterface = ClassName("interfaces", "Mediator")
 
@@ -38,7 +39,7 @@ fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>) {
     val parameterName = "command"
 
     val invokeBuilder = FunSpec.builder("invoke")
-        .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE)
+        .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE, KModifier.OPERATOR)
         .addTypeVariable(TypeVariableName("T", Any::class))
         .addParameter(parameterName, TypeVariableName("T"))
         .returns(ANY.copy(nullable = true))
@@ -60,16 +61,12 @@ fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>) {
 
     mediatorBuilder.addFunction(invokeBuilder.build())
 
+    val mediatorClass = mediatorBuilder.build()
     val fileSpec = FileSpec.builder(mediatorClassName, mediatorClassName)
-        .addType(mediatorBuilder.build())
+        .addType(mediatorClass)
         .build()
 
-    val sourceFiles = handlers.filter { it.origin != null }.map { it.origin!! }.toTypedArray()
-    val dependencies = if (sourceFiles.isNotEmpty()) {
-        Dependencies(aggregating = true, *sourceFiles)
-    } else {
-        Dependencies.ALL_FILES
-    }
+    fileSpec.writeTo(this, handlerDependencies(handlers))
 
-    fileSpec.writeTo(this, dependencies)
+    return ClassName(mediatorClassName, mediatorClassName)
 }

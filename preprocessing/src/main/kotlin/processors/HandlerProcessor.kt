@@ -13,10 +13,12 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.writeTo
 import errors.PreprocessingException
 import generators.di.generateKtorDI
 import generators.generateHandler
 import generators.generateMediator
+import generators.utils.handlerDependencies
 import interfaces.RequestHandler
 import metadata.HandlerMetadata
 
@@ -28,11 +30,20 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
             .filter { it.validate() }
             .forEach { it.accept(HandlerVisitor(), Unit) }
 
-        handlerMetadata.forEach { codeGenerator.generateHandler(it) }
-        val mediatorClass = codeGenerator.generateMediator(handlerMetadata)
+        handlerMetadata.forEach {
+            val handlerSpec = generateHandler(it)
+            val dependencies = handlerDependencies(it)
+            handlerSpec.writeTo(codeGenerator, dependencies)
+        }
 
-        if (mediatorClass != null)
-            codeGenerator.generateKtorDI(handlerMetadata, mediatorClass)
+        val mediatorMetadata = codeGenerator.generateMediator(handlerMetadata)
+        val dependencies = handlerDependencies(handlerMetadata)
+        mediatorMetadata?.fileSpec?.writeTo(codeGenerator, dependencies)
+
+        if (mediatorMetadata != null) {
+            val diSpec = codeGenerator.generateKtorDI(handlerMetadata, mediatorMetadata.className)
+            diSpec.writeTo(codeGenerator, dependencies)
+        }
 
         // Very important not to loop
         handlerMetadata.clear()

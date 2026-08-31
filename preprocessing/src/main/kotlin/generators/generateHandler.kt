@@ -1,15 +1,12 @@
 package generators
 
-import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.Dependencies
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.ksp.writeTo
 import metadata.HandlerMetadata
 
-fun CodeGenerator.generateHandler(
+fun generateHandler(
     metadata: HandlerMetadata
-) {
+): FileSpec {
     val superInterface = ClassName("interfaces", "RequestHandler")
         .parameterizedBy(metadata.inputType, metadata.returnType)
 
@@ -45,12 +42,5 @@ fun CodeGenerator.generateHandler(
     val fileSpec = FileSpec.builder(metadata.memberName.packageName, metadata.generatedClass.simpleName)
         .addType(handlerClass).build()
 
-    val sourceFile = metadata.origin
-    val dependencies = if (sourceFile != null) {
-        Dependencies(aggregating = false, sourceFile)
-    } else {
-        Dependencies.ALL_FILES
-    }
-
-    fileSpec.writeTo(this, dependencies)
+    return fileSpec
 }

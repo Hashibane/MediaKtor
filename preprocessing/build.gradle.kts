@@ -11,6 +11,11 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation("io.kotest:kotest-assertions-core:2.2.0")
+    testImplementation("io.kotest:kotest-runner-junit5:6.1.3")
+    testImplementation("io.mockk:mockk-jvm:1.14.11")
+    testImplementation(files("D:\\log4j\\slf4j-log4j13-1.0.1.jar"))
+
     implementation(project(":core"))
     implementation("com.google.devtools.ksp:symbol-processing-api:2.3.6")
     implementation("com.squareup:kotlinpoet:2.3.0")

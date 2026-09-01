@@ -72,6 +72,4 @@ fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): MediatorMet
         ClassName(mediatorClassName, mediatorClassName),
         fileSpec
     )
-
-    fileSpec.writeTo(this, handlerDependencies(handlers))
 }

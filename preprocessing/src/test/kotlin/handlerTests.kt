@@ -2,8 +2,10 @@
 import annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
+import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.*
 import com.google.devtools.ksp.validate
+import com.google.devtools.ksp.visitor.KSValidateVisitor
 import io.kotest.core.spec.style.FunSpec
 import io.mockk.every
 import io.mockk.mockk
@@ -18,12 +20,6 @@ fun <T, U> List<T>.zipForEach(other: List<U>, body: (T, U) -> Unit) {
 
 class HandlerTest : FunSpec({
     test("request handler primitive type test") {
-        val paramTypeNames = listOf(
-            mockkClass(KSName::class)
-        )
-
-        paramTypeNames.forEach { every { it.getShortName() } returns "TestClass" }
-
         val paramDeclarations = listOf(
             mockkClass(KSClassDeclaration::class)
         )
@@ -34,12 +30,11 @@ class HandlerTest : FunSpec({
         val fqClassName = mockkClass(KSName::class)
         every { fqClassName.asString() } returns "paramPackage.TestClass"
 
-        paramDeclarations.zipForEach(paramTypeNames) { decl, typeName ->
-            every { decl.simpleName } returns typeName
-            every { decl.parentDeclaration } returns null
-            every { decl.classKind } returns ClassKind.CLASS
-            every { decl.packageName } returns paramPackageName
-            every { decl.qualifiedName } returns fqClassName
+        paramDeclarations.forEach {
+            every { it.parentDeclaration } returns null
+            every { it.classKind } returns ClassKind.CLASS
+            every { it.packageName } returns paramPackageName
+            every { it.qualifiedName } returns fqClassName
         }
 
         val paramTypes = listOf(
@@ -63,18 +58,11 @@ class HandlerTest : FunSpec({
             every { ref.element } returns mockkClass(KSClassifierReference::class)
         }
 
-        val paramNames = listOf(
-            mockkClass(KSName::class)
-        )
-
-        paramNames.forEachIndexed { index, name -> every { name.getShortName() } returns "arg_$index" }
-
         val parameters = listOf(
             mockkClass(KSValueParameter::class)
         )
 
-        parameters.zipForEach(paramNames.zip(paramTypeRefs)) { param, (name, type) ->
-            every { param.name } returns name
+        parameters.zipForEach(paramTypeRefs) { param, type ->
             every { param.type } returns type
         }
 
@@ -88,7 +76,6 @@ class HandlerTest : FunSpec({
         every { returnClassName.asString() } returns "returnPackage.TestReturnClass"
 
         val returnTypeDeclaration = mockkClass(KSClassDeclaration::class)
-        every { returnTypeDeclaration.simpleName } returns returnTypeName
         every { returnTypeDeclaration.packageName } returns returnPackageName
         every { returnTypeDeclaration.qualifiedName } returns returnClassName
         every { returnTypeDeclaration.parentDeclaration } returns null
@@ -97,7 +84,6 @@ class HandlerTest : FunSpec({
         val returnType = mockkClass(KSType::class)
         every { returnType.nullability } returns Nullability.NOT_NULL
         every { returnType.declaration } returns returnTypeDeclaration
-        every { returnType.nullability } returns Nullability.NOT_NULL
         every { returnType.arguments } returns listOf()
         every { returnType.isError } returns false
         every { returnType.isMarkedNullable } returns false
@@ -161,7 +147,6 @@ class HandlerTest : FunSpec({
         every { valueArgName.asString() } returns "lifespan"
 
         val valueArg = mockkClass(KSValueArgument::class)
-        every { valueArg.name } returns valueArgName
         every { valueArg.value } returns lifespanEntryDeclaration
 
         val annotationName = mockkClass(KSName::class)
@@ -180,21 +165,25 @@ class HandlerTest : FunSpec({
         every { funDeclaration.containingFile } returns sourceFile
         every { funDeclaration.annotations } returns sequenceOf(annotation)
 
-        mockkStatic("com.google.devtools.ksp.UtilsKt")
-        with(mockk<KSFunctionDeclaration>()) {
-            every {
-                validate(any())
-            } returns true
+        val outputStreams = mutableListOf<ByteArrayOutputStream>()
+        repeat(3) {
+            outputStreams.add(ByteArrayOutputStream())
         }
 
-        val outputStream = ByteArrayOutputStream()
         val codeGenerator = mockkClass(CodeGenerator::class)
-        every { codeGenerator.createNewFile(any(), any(), any()) } returns outputStream
+        every { codeGenerator.createNewFile(any(), any(), any()) } returnsMany outputStreams
 
         val logger = mockkClass(KSPLogger::class)
 
         val processor = HandlerProcessor(codeGenerator, logger)
+
+        val resolver = mockkClass(Resolver::class)
+        every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+
         processor.HandlerVisitor().visitFunctionDeclaration(funDeclaration, Unit)
+        processor.process(resolver)
+
+        println(outputStreams.drop(2).first().toString())
     }
 })
 

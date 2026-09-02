@@ -31,6 +31,12 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
             .filter { it.validate() }
             .forEach { it.accept(HandlerVisitor(), Unit) }
 
+        /*
+         *  TODO : Metadata verification for:
+         *  - Multiple instances of handlers with identical request types
+         *  - Type arguments in request types
+         */
+
         handlerMetadata.forEach {
             val handlerSpec = generateHandler(it)
             val dependencies = handlerDependencies(it)

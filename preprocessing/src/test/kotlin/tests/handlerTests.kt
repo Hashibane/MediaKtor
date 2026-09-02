@@ -32,7 +32,7 @@ import value
 import variance
 import kotlin.test.Test
 
-private fun KSFunctionDeclaration.setupTypeTest(handlerName: String) {
+internal fun KSFunctionDeclaration.setupTypeTest(handlerName: String) {
     packageName { "handlers" }
     containingFile {
         packageName { "handlers" }
@@ -70,7 +70,7 @@ private fun KSFunctionDeclaration.setupTypeTest(handlerName: String) {
     }
 }
 
-class HandlerTest {
+class HandlerTests {
     @Test
     fun `request handler type without modifications`() {
         val inputClass = "TestInputClass"

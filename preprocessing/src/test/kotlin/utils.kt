@@ -1,29 +1,24 @@
-import com.google.devtools.ksp.symbol.ClassKind
-import com.google.devtools.ksp.symbol.KSClassDeclaration
-import com.google.devtools.ksp.symbol.KSDeclaration
-import com.google.devtools.ksp.symbol.KSName
-import com.google.devtools.ksp.symbol.KSType
-import com.google.devtools.ksp.symbol.Nullability
+import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.KSPLogger
 import io.mockk.every
 import io.mockk.mockkClass
+import processors.HandlerProcessor
+import java.io.ByteArrayOutputStream
 
-internal fun mockName(string: String) {
-    val name = mockkClass(KSName::class)
-    every { name.asString() } returns string
-}
+fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): List<String> {
+    val outputStreams = mutableListOf<ByteArrayOutputStream>()
+    // one per handler + 1 mediator + one DI
+    repeat(nHandlers + 2) {
+        outputStreams.add(ByteArrayOutputStream())
+    }
 
-fun KSClassDeclaration.qualifiedName(body: () -> String) = mockName(body())
+    val codeGenerator = mockkClass(CodeGenerator::class)
+    every { codeGenerator.createNewFile(any(), any(), any()) } returnsMany outputStreams
 
-fun KSClassDeclaration.packageName(body: () -> String) = mockName(body())
+    val logger = mockkClass(KSPLogger::class)
+    val processor = HandlerProcessor(codeGenerator, logger)
 
-fun KSClassDeclaration.classKind(body: () -> ClassKind) = every { classKind } returns body()
+    processor.body()
 
-fun KSClassDeclaration.parentDeclaration(body: () -> KSDeclaration?) = every { parentDeclaration } returns body()
-
-fun KSType.declaration(body: () -> KSDeclaration) = every { declaration } returns body()
-
-fun KSType.nullability(body: () -> Nullability) {
-    val nullability_ = body()
-    every { nullability } returns nullability
-    every { isMarkedNullable } returns (nullability != Nullability.NOT_NULL)
+    return outputStreams.map { it.toString() }
 }

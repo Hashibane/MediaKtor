@@ -12,6 +12,7 @@ import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueArgument
 import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Nullability
+import com.google.devtools.ksp.symbol.Variance
 import io.mockk.every
 import io.mockk.mockkClass
 
@@ -34,6 +35,7 @@ internal fun mockClassDeclaration(body: KSClassDeclaration.(KSClassDeclaration) 
 
 internal fun mockTypeArgument(body: KSTypeArgument.(KSTypeArgument) -> Unit) {
     val typeArg = mockkClass(KSTypeArgument::class)
+    every { typeArg.type } returns null
     typeArg.body(typeArg)
 }
 
@@ -102,6 +104,7 @@ fun KSType.nullability(body: () -> Nullability) {
 
 fun KSType.argument(body: KSTypeArgument.() -> Unit) = mockTypeArgument {
     val typeArg = mockkClass(KSTypeArgument::class)
+    every { typeArg.type } returns null
     typeArg.body()
 
     val newArgs = arguments.toMutableList()
@@ -149,6 +152,7 @@ fun KSAnnotation.shortName(body: () -> String) = every { shortName } returns moc
 
 fun KSFunctionDeclaration.parameter(body: KSValueParameter.() -> Unit) {
     val valueParam = mockkClass(KSValueParameter::class)
+    every { valueParam.name } returns null
     valueParam.body()
 
     val newParams = parameters.toMutableList()
@@ -156,6 +160,8 @@ fun KSFunctionDeclaration.parameter(body: KSValueParameter.() -> Unit) {
 
     every { parameters } returns newParams
 }
+
+fun KSValueParameter.name(body: () -> String) = every { name } returns mockName(body())
 
 fun KSFunctionDeclaration.returnType(body: KSTypeReference.() -> Unit) = mockTypeReference {
     body()
@@ -184,3 +190,11 @@ fun KSFunctionDeclaration.annotation(body: KSAnnotation.() -> Unit) {
 fun KSDeclaration.packageName(body: () -> String) = every { packageName } returns mockName(body())
 
 fun KSDeclaration.qualifiedName(body: () -> String) = every { qualifiedName } returns mockName(body())
+
+fun KSTypeArgument.typeRef(body: KSTypeReference.() -> Unit) = mockTypeReference {
+    body()
+    every { this@typeRef.type } returns this
+}
+
+
+fun KSTypeArgument.variance(body: () -> Variance) = every { variance } returns body()

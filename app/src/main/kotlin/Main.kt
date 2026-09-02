@@ -1,3 +1,4 @@
+import handlers.Request
 import interfaces.Mediator
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -27,7 +28,7 @@ fun Application.module() {
     routing {
         get("/test/{text}") {
             val echoText = call.parameters["text"].toString()
-            val response = mediator(echoText)
+            val response = mediator(Request(echoText))
             call.respond(HttpStatusCode.OK, response.toString())
         }
     }

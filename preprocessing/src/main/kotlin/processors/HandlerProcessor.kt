@@ -52,14 +52,12 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         return emptyList()
     }
 
-    companion object {
-        var _id = 0
-        val id: Int
-            get() {
-                _id += 1
-                return _id
-            }
-    }
+    private var _id = 0
+    val id: Int
+        get() {
+            _id += 1
+            return _id
+        }
 
     inner class HandlerVisitor : KSVisitorVoid() {
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {

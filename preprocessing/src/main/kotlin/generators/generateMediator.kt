@@ -49,7 +49,6 @@ fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): MediatorMet
 
     handlers.forEach {
         val propName = it.generatedClass.simpleName.lowercase()
-
         invokeBuilder.beginControlFlow("is %T ->", it.inputType)
             .addStatement("%L().handleRequest(%L)", propName, parameterName)
             .endControlFlow()

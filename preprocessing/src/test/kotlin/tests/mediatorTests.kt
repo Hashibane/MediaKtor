@@ -16,6 +16,7 @@ import packageName
 import parameter
 import qualifiedName
 import returnType
+import setupHandler
 import type
 import typeRef
 import kotlin.test.Test
@@ -28,7 +29,7 @@ class MediatorTests {
         val handlerOneName = "testHandler1"
 
         val handlerOne = functionDeclaration {
-            setupTypeTest(handlerOneName)
+            setupHandler(handlerOneName)
 
             parameter {
                 typeRef {
@@ -63,7 +64,7 @@ class MediatorTests {
         val handlerTwoName = "testHandler2"
 
         val handlerTwo = functionDeclaration {
-            setupTypeTest(handlerTwoName)
+            setupHandler(handlerTwoName)
 
             parameter {
                 typeRef {

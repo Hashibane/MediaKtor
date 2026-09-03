@@ -24,6 +24,7 @@ import parameter
 import parentClassDeclaration
 import qualifiedName
 import returnType
+import setupHandler
 import shortName
 import simpleName
 import type
@@ -31,44 +32,6 @@ import typeRef
 import value
 import variance
 import kotlin.test.Test
-
-internal fun KSFunctionDeclaration.setupTypeTest(handlerName: String) {
-    packageName { "handlers" }
-    containingFile {
-        packageName { "handlers" }
-    }
-
-    simpleName { handlerName }
-
-    annotation {
-        shortName { "RequestHandler" }
-        annotationType {
-            type {
-                declaration {
-                    packageName { "annotations" }
-                    qualifiedName { "annotations.RequestHandler" }
-                }
-            }
-        }
-
-        argument {
-            value {
-                classDeclaration {
-                    packageName { "annotations" }
-                    qualifiedName { "annotations.HandlerLifespan.SINGLE" }
-                    classKind { ClassKind.ENUM_ENTRY }
-
-                    every { this@classDeclaration.toString() } returns "HandlerLifespan.SINGLE"
-                    parentClassDeclaration {
-                        packageName { "annotations" }
-                        qualifiedName { "annotations.HandlerLifespan" }
-                        classKind { ClassKind.ENUM_CLASS }
-                    }
-                }
-            }
-        }
-    }
-}
 
 class HandlerTests {
     @Test
@@ -78,7 +41,7 @@ class HandlerTests {
         val handlerName = "testHandler"
 
         val funDecl = functionDeclaration {
-            setupTypeTest(handlerName)
+            setupHandler(handlerName)
 
             parameter {
                 typeRef {
@@ -130,7 +93,7 @@ class HandlerTests {
         val handlerName = "testHandler"
 
         val funDecl = functionDeclaration {
-            setupTypeTest(handlerName)
+            setupHandler(handlerName)
 
             parameter {
                 typeRef {
@@ -183,7 +146,7 @@ class HandlerTests {
         val typeParamName = "TypeParam"
 
         val funDecl = functionDeclaration {
-            setupTypeTest(handlerName)
+            setupHandler(handlerName)
 
             parameter {
                 typeRef {
@@ -252,7 +215,7 @@ class HandlerTests {
         val typeParamName = "TypeParam"
 
         val funDecl = functionDeclaration {
-            setupTypeTest(handlerName)
+            setupHandler(handlerName)
 
             parameter {
                 typeRef {
@@ -319,7 +282,7 @@ class HandlerTests {
         val outputClass = "TestReturnClass"
         val handlerName = "testHandler"
         val funDecl = functionDeclaration {
-            setupTypeTest(handlerName)
+            setupHandler(handlerName)
 
             parameter {
                 typeRef {
@@ -377,7 +340,7 @@ class HandlerTests {
         val outputClass = "TestReturnClass"
         val handlerName = "testHandler"
         val funDecl = functionDeclaration {
-            setupTypeTest(handlerName)
+            setupHandler(handlerName)
 
             parameter {
                 name { "first" }
@@ -450,7 +413,7 @@ class HandlerTests {
         val outputClass = "TestReturnClass"
         val handlerName = "testHandler"
         val funDecl = functionDeclaration {
-            setupTypeTest(handlerName)
+            setupHandler(handlerName)
 
             parameter {
                 name { "first" }

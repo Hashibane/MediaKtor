@@ -11,3 +11,12 @@ fun handlerDependencies(handlers: List<HandlerMetadata>): Dependencies {
     else
         Dependencies.ALL_FILES
 }
+
+fun handlerDependencies(handler: HandlerMetadata): Dependencies {
+    val sourceFile = handler.origin
+    return if (sourceFile != null) {
+        Dependencies(aggregating = false, sourceFile)
+    } else {
+        Dependencies.ALL_FILES
+    }
+}

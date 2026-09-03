@@ -6,6 +6,7 @@ import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.processing.SymbolProcessor
 import com.google.devtools.ksp.symbol.KSAnnotated
+import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
@@ -13,10 +14,12 @@ import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.writeTo
 import errors.PreprocessingException
 import generators.di.generateKtorDI
 import generators.generateHandler
 import generators.generateMediator
+import generators.utils.handlerDependencies
 import interfaces.RequestHandler
 import metadata.HandlerMetadata
 
@@ -28,11 +31,26 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
             .filter { it.validate() }
             .forEach { it.accept(HandlerVisitor(), Unit) }
 
-        handlerMetadata.forEach { codeGenerator.generateHandler(it) }
-        val mediatorClass = codeGenerator.generateMediator(handlerMetadata)
+        /*
+         *  TODO : Metadata verification for:
+         *  - Multiple instances of handlers with identical request types
+         *  - Type arguments in request types
+         */
 
-        if (mediatorClass != null)
-            codeGenerator.generateKtorDI(handlerMetadata, mediatorClass)
+        handlerMetadata.forEach {
+            val handlerSpec = generateHandler(it)
+            val dependencies = handlerDependencies(it)
+            handlerSpec.writeTo(codeGenerator, dependencies)
+        }
+
+        val mediatorMetadata = codeGenerator.generateMediator(handlerMetadata)
+        val dependencies = handlerDependencies(handlerMetadata)
+        mediatorMetadata?.fileSpec?.writeTo(codeGenerator, dependencies)
+
+        if (mediatorMetadata != null) {
+            val diSpec = codeGenerator.generateKtorDI(handlerMetadata, mediatorMetadata.className)
+            diSpec.writeTo(codeGenerator, dependencies)
+        }
 
         // Very important not to loop
         handlerMetadata.clear()
@@ -40,14 +58,12 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         return emptyList()
     }
 
-    companion object {
-        var _id = 0
-        val id: Int
-            get() {
-                _id += 1
-                return _id
-            }
-    }
+    private var _id = 0
+    val id: Int
+        get() {
+            _id += 1
+            return _id
+        }
 
     inner class HandlerVisitor : KSVisitorVoid() {
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {

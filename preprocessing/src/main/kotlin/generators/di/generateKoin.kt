@@ -12,7 +12,7 @@ import generators.utils.handlerDependencies
 import metadata.HandlerMetadata
 import org.koin.core.module.Module
 
-fun CodeGenerator.generateKtorDI(handlers: List<HandlerMetadata>, mediator: ClassName) {
+fun CodeGenerator.generateKtorDI(handlers: List<HandlerMetadata>, mediator: ClassName): FileSpec {
 
     val configName = "provideMediator"
 
@@ -45,6 +45,5 @@ fun CodeGenerator.generateKtorDI(handlers: List<HandlerMetadata>, mediator: Clas
         .addFunction(dependencyConfig.build())
         .build()
 
-
-    fileSpec.writeTo(this, handlerDependencies(handlers))
+    return fileSpec
 }

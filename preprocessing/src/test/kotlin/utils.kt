@@ -1,7 +1,10 @@
+import annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
+import com.google.devtools.ksp.symbol.KSClassifierReference
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.Nullability
 import io.mockk.every
 import io.mockk.mockkClass
 import processors.HandlerProcessor
@@ -26,7 +29,7 @@ fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): Lis
 }
 
 
-internal fun KSFunctionDeclaration.setupHandler(handlerName: String) {
+internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: HandlerLifespan = HandlerLifespan.SINGLE) {
     packageName { "handlers" }
     containingFile {
         packageName { "handlers" }
@@ -49,16 +52,52 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String) {
             value {
                 classDeclaration {
                     packageName { "annotations" }
-                    qualifiedName { "annotations.HandlerLifespan.SINGLE" }
+                    qualifiedName { "annotations.HandlerLifespan.$lifespan" }
                     classKind { ClassKind.ENUM_ENTRY }
 
-                    every { this@classDeclaration.toString() } returns "HandlerLifespan.SINGLE"
+                    every { this@classDeclaration.toString() } returns "HandlerLifespan.$lifespan"
                     parentClassDeclaration {
                         packageName { "annotations" }
                         qualifiedName { "annotations.HandlerLifespan" }
                         classKind { ClassKind.ENUM_CLASS }
                     }
                 }
+            }
+        }
+    }
+}
+
+internal fun KSFunctionDeclaration.setupHandlerReturn(handlerName: String, lifespan: HandlerLifespan = HandlerLifespan.SINGLE) {
+    setupHandler(handlerName, lifespan)
+
+    returnType {
+        type {
+            nullability { Nullability.NULLABLE }
+            classDeclaration {
+                packageName { "returnPackage" }
+                qualifiedName { "returnPackage.test" }
+                classKind { ClassKind.CLASS }
+            }
+        }
+    }
+}
+
+internal fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lifespan: HandlerLifespan) {
+    setupHandlerReturn(handlerName, lifespan)
+
+    parameter {
+        name { "first" }
+        typeRef {
+            type {
+                nullability { Nullability.NULLABLE }
+                classDeclaration {
+                    packageName { "paramPackage" }
+                    qualifiedName { "paramPackage.test" }
+                    classKind { ClassKind.CLASS }
+                }
+            }
+            element {
+                mockkClass(KSClassifierReference::class)
             }
         }
     }

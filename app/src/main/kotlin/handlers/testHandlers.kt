@@ -5,7 +5,7 @@ import annotations.RequestHandler
 
 data class Request(val content: String)
 
-@RequestHandler(HandlerLifespan.FACTORY)
+@RequestHandler(HandlerLifespan.SINGLE)
 fun testHandler(arg: Request?): String {
     return "Hello $arg!"
 }

@@ -399,13 +399,13 @@ class HandlerTests {
         val handlerCode = generatedCode.first()
         assert(handlerCode.contains("class Handler__${handlerName}__1"))
         assert(handlerCode.contains(": RequestHandler<$inputClass?, $outputClass?>"))
+        assert(handlerCode.contains("val second: $argClass"))
         assert(handlerCode.contains("= $handlerName"))
         assert(handlerCode.contains("override suspend fun handleRequest(request: $inputClass?): " +
                 "$outputClass?"))
 
     }
 
-    //TODO : Implement proper mediator generation for function arguments
     @Test
     fun `request handler function param`() {
         val inputClass = "TestInputClass"

@@ -8,7 +8,9 @@ import com.squareup.kotlinpoet.ksp.writeTo
 import generators.utils.handlerDependencies
 import metadata.HandlerMetadata
 
-fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): ClassName? {
+data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
+
+fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
     if (handlers.isEmpty()) return null
 
     val superInterface = ClassName("interfaces", "Mediator")
@@ -47,7 +49,6 @@ fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): ClassName? 
 
     handlers.forEach {
         val propName = it.generatedClass.simpleName.lowercase()
-
         invokeBuilder.beginControlFlow("is %T ->", it.inputType)
             .addStatement("%L().handleRequest(%L)", propName, parameterName)
             .endControlFlow()
@@ -66,7 +67,8 @@ fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): ClassName? 
         .addType(mediatorClass)
         .build()
 
-    fileSpec.writeTo(this, handlerDependencies(handlers))
-
-    return ClassName(mediatorClassName, mediatorClassName)
+    return MediatorMetadata(
+        ClassName(mediatorClassName, mediatorClassName),
+        fileSpec
+    )
 }

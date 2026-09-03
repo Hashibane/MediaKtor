@@ -3,7 +3,9 @@ package handlers
 import annotations.HandlerLifespan
 import annotations.RequestHandler
 
-@RequestHandler(HandlerLifespan.FACTORY)
-fun testHandler(somearg: String): String {
-    return "Hello $somearg!"
+data class Request(val content: String)
+
+@RequestHandler(HandlerLifespan.SINGLE)
+fun testHandler(arg: Request?): String {
+    return "Hello $arg!"
 }

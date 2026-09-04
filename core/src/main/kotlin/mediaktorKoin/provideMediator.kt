@@ -8,5 +8,6 @@ import org.koin.core.module.Module
 * compile time (and after the preprocessing).
 * https://kotlinlang.org/spec/overload-resolution.html - 11.4.2
  */
+
 fun Module.provideMediator(arg: Unit = Unit): Nothing = throw DIException("Unable to overload provideMediator() function" +
         "for Koin. This is a bug. Report it at https://github.com/Hashibane/MediaKtor")

@@ -1,16 +1,12 @@
 package generators
 
-import com.google.devtools.ksp.processing.CodeGenerator
-import com.google.devtools.ksp.processing.Dependencies
 import com.squareup.kotlinpoet.*
-import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
-import com.squareup.kotlinpoet.ksp.writeTo
-import generators.utils.handlerDependencies
 import metadata.HandlerMetadata
+import kotlin.collections.forEach
 
 data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
 
-fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
+fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
     if (handlers.isEmpty()) return null
 
     val superInterface = ClassName("interfaces", "Mediator")
@@ -47,7 +43,7 @@ fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): MediatorMet
         .returns(ANY.copy(nullable = true))
         .beginControlFlow("return when (%L)", parameterName)
 
-    handlers.forEach {
+    handlers.filter { !it.isNotificationHandler } .forEach {
         val propName = it.generatedClass.simpleName.lowercase()
         invokeBuilder.beginControlFlow("is %T ->", it.inputType)
             .addStatement("%L().handleRequest(%L)", propName, parameterName)
@@ -61,6 +57,38 @@ fun CodeGenerator.generateMediator(handlers: List<HandlerMetadata>): MediatorMet
         .endControlFlow()
 
     mediatorBuilder.addFunction(invokeBuilder.build())
+
+    val notificationHandlerMap = mutableMapOf<TypeName, MutableList<String>>()
+    handlers.filter { it.isNotificationHandler }.forEach {
+        if (notificationHandlerMap[it.inputType] == null) {
+            notificationHandlerMap[it.inputType] = mutableListOf()
+        }
+
+        notificationHandlerMap[it.inputType]?.add(it.generatedClass.simpleName.lowercase())
+    }
+
+    val publishBuilder = FunSpec.builder("publish")
+        .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE)
+        .addTypeVariable(TypeVariableName("T", Any::class))
+        .addParameter(parameterName, TypeVariableName("T"))
+        .beginControlFlow("when (%L)", parameterName)
+
+    notificationHandlerMap.forEach { (typeName, handlers) ->
+        publishBuilder.beginControlFlow("is %T ->", typeName)
+
+        handlers.forEach {
+            publishBuilder.addStatement("%L().handleRequest(%L)", it, parameterName)
+        }
+
+        publishBuilder.endControlFlow()
+    }
+
+    val notificationLine = "No handler registered for notification $$parameterName"
+    publishBuilder
+        .addStatement("else -> throw IllegalArgumentException(%P)", notificationLine)
+        .endControlFlow()
+
+    mediatorBuilder.addFunction(publishBuilder.build())
 
     val mediatorClass = mediatorBuilder.build()
     val fileSpec = FileSpec.builder(mediatorClassName, mediatorClassName)

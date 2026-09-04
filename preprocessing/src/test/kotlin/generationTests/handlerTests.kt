@@ -1,17 +1,12 @@
-package tests
-import annotation
-import annotationType
+package generationTests
 import argument
 import classDeclaration
 import classKind
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassifierReference
-import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.Nullability
 import com.google.devtools.ksp.symbol.Variance
-import containingFile
-import declaration
 import element
 import functionDeclaration
 import generateStringOutput
@@ -21,15 +16,11 @@ import name
 import nullability
 import packageName
 import parameter
-import parentClassDeclaration
 import qualifiedName
 import returnType
 import setupHandler
-import shortName
-import simpleName
 import type
 import typeRef
-import value
 import variance
 import kotlin.test.Test
 
@@ -74,8 +65,9 @@ class HandlerTests {
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
 
-            HandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
         }
 
@@ -126,8 +118,9 @@ class HandlerTests {
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
 
-            HandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
         }
 
@@ -193,8 +186,9 @@ class HandlerTests {
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
 
-            HandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
         }
 
@@ -262,8 +256,9 @@ class HandlerTests {
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
 
-            HandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
         }
 
@@ -319,8 +314,9 @@ class HandlerTests {
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
 
-            HandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
         }
 
@@ -391,8 +387,9 @@ class HandlerTests {
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
 
-            HandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
         }
 
@@ -464,8 +461,9 @@ class HandlerTests {
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
 
-            HandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
         }
 

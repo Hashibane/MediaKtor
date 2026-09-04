@@ -29,7 +29,8 @@ fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): Lis
 }
 
 
-internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: HandlerLifespan = HandlerLifespan.SINGLE) {
+internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: HandlerLifespan = HandlerLifespan.SINGLE,
+                                                isNotificationHandler: Boolean = false) {
     packageName { "handlers" }
     containingFile {
         packageName { "handlers" }
@@ -37,13 +38,14 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
 
     simpleName { handlerName }
 
+    val name = if (isNotificationHandler) "NotificationHandler" else "RequestHandler"
     annotation {
-        shortName { "RequestHandler" }
+        shortName { name }
         annotationType {
             type {
                 declaration {
                     packageName { "annotations" }
-                    qualifiedName { "annotations.RequestHandler" }
+                    qualifiedName { "annotations.$name" }
                 }
             }
         }
@@ -67,23 +69,24 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
     }
 }
 
-internal fun KSFunctionDeclaration.setupHandlerReturn(handlerName: String, lifespan: HandlerLifespan = HandlerLifespan.SINGLE) {
-    setupHandler(handlerName, lifespan)
+internal fun KSFunctionDeclaration.setupHandlerReturn(handlerName: String,
+                                                      lifespan: HandlerLifespan = HandlerLifespan.SINGLE, isNotificationHandler: Boolean = false) {
+    setupHandler(handlerName, lifespan, isNotificationHandler)
 
     returnType {
         type {
             nullability { Nullability.NULLABLE }
             classDeclaration {
-                packageName { "returnPackage" }
-                qualifiedName { "returnPackage.test" }
+                packageName { "kotlin" }
+                qualifiedName { "kotlin.Unit" }
                 classKind { ClassKind.CLASS }
             }
         }
     }
 }
 
-internal fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lifespan: HandlerLifespan) {
-    setupHandlerReturn(handlerName, lifespan)
+internal fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lifespan: HandlerLifespan, isNotificationHandler: Boolean = false) {
+    setupHandlerReturn(handlerName, lifespan, isNotificationHandler)
 
     parameter {
         name { "first" }
@@ -92,7 +95,7 @@ internal fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lif
                 nullability { Nullability.NULLABLE }
                 classDeclaration {
                     packageName { "paramPackage" }
-                    qualifiedName { "paramPackage.test" }
+                    qualifiedName { "paramPackage.type__$handlerName" }
                     classKind { ClassKind.CLASS }
                 }
             }

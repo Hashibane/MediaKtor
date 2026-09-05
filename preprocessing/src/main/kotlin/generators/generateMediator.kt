@@ -43,7 +43,7 @@ fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
         .returns(ANY.copy(nullable = true))
         .beginControlFlow("return when (%L)", parameterName)
 
-    handlers.filter { !it.isNotificationHandler } .forEach {
+    handlers.filter { it.notificationHandlerData == null } .forEach {
         val propName = it.generatedClass.simpleName.lowercase()
         invokeBuilder.beginControlFlow("is %T ->", it.inputType)
             .addStatement("%L().handleRequest(%L)", propName, parameterName)
@@ -59,7 +59,7 @@ fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
     mediatorBuilder.addFunction(invokeBuilder.build())
 
     val notificationHandlerMap = mutableMapOf<TypeName, MutableList<String>>()
-    handlers.filter { it.isNotificationHandler }.forEach {
+    handlers.filter { it.notificationHandlerData != null }.forEach {
         if (notificationHandlerMap[it.inputType] == null) {
             notificationHandlerMap[it.inputType] = mutableListOf()
         }

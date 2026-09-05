@@ -1,5 +1,6 @@
 package generationTests
 
+import annotations.NotificationParallel
 import classDeclaration
 import classKind
 import com.google.devtools.ksp.processing.Resolver
@@ -11,6 +12,7 @@ import functionDeclaration
 import generateStringOutput
 import io.mockk.every
 import io.mockk.mockkClass
+import metadata.NotificationHandlerMetadata
 import nullability
 import packageName
 import parameter
@@ -188,7 +190,8 @@ class MediatorTests {
         val handlerOneName = "testHandler1"
 
         val handlerOne = functionDeclaration {
-            setupHandlerReturn(handlerOneName, isNotificationHandler = true)
+            setupHandlerReturn(handlerOneName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
 
             parameter {
                 typeRef {
@@ -210,7 +213,8 @@ class MediatorTests {
         val handlerTwoName = "testHandler2"
 
         val handlerTwo = functionDeclaration {
-            setupHandlerReturn(handlerTwoName, isNotificationHandler = true)
+            setupHandlerReturn(handlerTwoName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
 
             parameter {
                 typeRef {
@@ -255,7 +259,8 @@ class MediatorTests {
         val handlerOneName = "testHandler1"
 
         val handlerOne = functionDeclaration {
-            setupHandlerReturn(handlerOneName, isNotificationHandler = true)
+            setupHandlerReturn(handlerOneName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
 
             parameter {
                 typeRef {
@@ -278,7 +283,8 @@ class MediatorTests {
         val inputTwoClass = "TestInputClass2"
 
         val handlerTwo = functionDeclaration {
-            setupHandlerReturn(handlerTwoName, isNotificationHandler = true)
+            setupHandlerReturn(handlerTwoName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
 
             parameter {
                 typeRef {

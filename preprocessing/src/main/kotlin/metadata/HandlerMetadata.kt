@@ -15,5 +15,5 @@ data class HandlerMetadata(
     val returnType: TypeName,
     val origin: KSFile?,
     val lifecycle: HandlerLifespan,
-    val isNotificationHandler: Boolean = false
+    val notificationHandlerData: NotificationHandlerMetadata? = null
 )

@@ -7,6 +7,7 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.Nullability
 import io.mockk.every
 import io.mockk.mockkClass
+import metadata.NotificationHandlerMetadata
 import processors.HandlerProcessor
 import java.io.ByteArrayOutputStream
 
@@ -30,7 +31,7 @@ fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): Lis
 
 
 internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: HandlerLifespan = HandlerLifespan.SINGLE,
-                                                isNotificationHandler: Boolean = false) {
+                                                notificationHandlerData: NotificationHandlerMetadata? = null) {
     packageName { "handlers" }
     containingFile {
         packageName { "handlers" }
@@ -38,7 +39,7 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
 
     simpleName { handlerName }
 
-    val name = if (isNotificationHandler) "NotificationHandler" else "RequestHandler"
+    val name = if (notificationHandlerData != null) "NotificationHandler" else "RequestHandler"
     annotation {
         shortName { name }
         annotationType {
@@ -66,12 +67,37 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
                 }
             }
         }
+        if (notificationHandlerData != null) {
+            argument {
+                value {
+                    classDeclaration {
+                        packageName { "annotations" }
+                        qualifiedName { "annotations.NotificationParallel.${notificationHandlerData.parallel}" }
+                        classKind { ClassKind.ENUM_ENTRY }
+
+                        every { this@classDeclaration.toString() } returns "NotificationParallel.${notificationHandlerData.parallel}"
+                        parentClassDeclaration {
+                            packageName { "annotations" }
+                            qualifiedName { "annotations.NotificationParallel" }
+                            classKind { ClassKind.ENUM_CLASS }
+                        }
+                    }
+                }
+            }
+
+            argument {
+                value {
+                    notificationHandlerData.order
+                }
+            }
+        }
     }
 }
 
 internal fun KSFunctionDeclaration.setupHandlerReturn(handlerName: String,
-                                                      lifespan: HandlerLifespan = HandlerLifespan.SINGLE, isNotificationHandler: Boolean = false) {
-    setupHandler(handlerName, lifespan, isNotificationHandler)
+                                                      lifespan: HandlerLifespan = HandlerLifespan.SINGLE,
+                                                      notificationHandlerData: NotificationHandlerMetadata? = null) {
+    setupHandler(handlerName, lifespan, notificationHandlerData)
 
     returnType {
         type {
@@ -85,8 +111,9 @@ internal fun KSFunctionDeclaration.setupHandlerReturn(handlerName: String,
     }
 }
 
-internal fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lifespan: HandlerLifespan, isNotificationHandler: Boolean = false) {
-    setupHandlerReturn(handlerName, lifespan, isNotificationHandler)
+internal fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lifespan: HandlerLifespan,
+                                                        notificationHandlerData: NotificationHandlerMetadata? = null) {
+    setupHandlerReturn(handlerName, lifespan, notificationHandlerData)
 
     parameter {
         name { "first" }

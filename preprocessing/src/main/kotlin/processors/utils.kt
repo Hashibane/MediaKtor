@@ -1,6 +1,7 @@
 package processors
 
 import annotations.HandlerLifespan
+import annotations.NotificationParallel
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
@@ -8,9 +9,10 @@ import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.ksp.toTypeName
 import errors.PreprocessingException
 import metadata.HandlerMetadata
+import metadata.NotificationHandlerMetadata
 
 fun MutableList<HandlerMetadata>.verifyMetadata() {
-    val requestHandlerMetadata = this.filter { !it.isNotificationHandler }
+    val requestHandlerMetadata = this.filter { it.notificationHandlerData == null }
     val inputGroups = requestHandlerMetadata.groupBy { it.inputType }
     inputGroups.forEach { name, metadata ->
         if (metadata.size > 1) {
@@ -52,6 +54,27 @@ fun MutableList<HandlerMetadata>.addMetadata(function: KSFunctionDeclaration, id
     val annotationClassName = if (!isNotificationHandler) annotations.RequestHandler::class.simpleName!! else
         annotations.NotificationHandler::class.simpleName!!
 
+    val functionAnnotationArgs = function.annotations
+        .find { it.shortName.asString() == annotationClassName }
+        ?.arguments
+
+    val notificationData = if (isNotificationHandler) {
+        val parallel = functionAnnotationArgs?.drop(1)?.first()?.value.toString()
+        val order = functionAnnotationArgs?.drop(2)?.first()?.value.toString()
+
+        NotificationHandlerMetadata(
+            when (parallel) {
+                "NotificationParallel.SEQUENTIAL" -> NotificationParallel.SEQUENTIAL
+                "NotificationParallel.PARALLEL" -> NotificationParallel.PARALLEL
+                else -> throw PreprocessingException(
+                    "Unknown lifecycle specifier $parallel on" +
+                            " function $functionName. Expected sequential or parallel"
+                )
+            },
+            order.toInt()
+        )
+    } else null
+
     add(
         HandlerMetadata(
             MemberName(packageName, functionName),
@@ -65,9 +88,7 @@ fun MutableList<HandlerMetadata>.addMetadata(function: KSFunctionDeclaration, id
             },
             returnType = returnType.toTypeName(),
             origin = function.containingFile,
-            lifecycle = when (val lifecycle = function.annotations
-                .find { it.shortName.asString() == annotationClassName }
-                ?.arguments?.first()?.value.toString()) {
+            lifecycle = when (val lifecycle = functionAnnotationArgs?.first()?.value.toString()) {
                 "HandlerLifespan.SINGLE" -> HandlerLifespan.SINGLE
                 "HandlerLifespan.FACTORY" -> HandlerLifespan.FACTORY
                 else -> throw PreprocessingException(
@@ -75,7 +96,7 @@ fun MutableList<HandlerMetadata>.addMetadata(function: KSFunctionDeclaration, id
                             " function $functionName. Expected single or factory"
                 )
             },
-            isNotificationHandler
+            notificationData
         )
     )
 }

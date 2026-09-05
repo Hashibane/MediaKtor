@@ -12,7 +12,7 @@ fun testHandler(arg: Request?): Unit {
 
 }
 
-@NotificationHandler(order = 2)
+@NotificationHandler()
 fun testNotifier(arg: Request) {
     println("got the notif 1")
 }

@@ -249,8 +249,10 @@ class MediatorTests {
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
         assert(mediatorCode.contains("is $inputOneClass ->"))
-        assert(mediatorCode.contains("handler__${handlerOneName.lowercase()}__1().handleRequest(command)"))
-        assert(mediatorCode.contains("handler__${handlerTwoName.lowercase()}__2().handleRequest(command)"))
+        assert(mediatorCode.contains(
+            """handler__${handlerOneName.lowercase()}__1().handleRequest(command)
+            |          handler__${handlerTwoName.lowercase()}__2().handleRequest(command)
+        """.trimMargin()))
     }
 
     @Test
@@ -322,5 +324,92 @@ class MediatorTests {
         assert(mediatorCode.contains("is $inputTwoClass ->"))
         assert(mediatorCode.contains("handler__${handlerOneName.lowercase()}__1().handleRequest(command)"))
         assert(mediatorCode.contains("handler__${handlerTwoName.lowercase()}__2().handleRequest(command)"))
+        assert(!mediatorCode.contains(
+            """handler__${handlerOneName.lowercase()}__1().handleRequest(command)
+            |          handler__${handlerTwoName.lowercase()}__2().handleRequest(command)
+        """.trimMargin()))
+    }
+
+    @Test
+    fun `multiple parallel notifiers with reversed order`() {
+        val inputOneClass = "TestInputClass1"
+        val handlerOneName = "testHandler1"
+
+        val handlerOne = functionDeclaration {
+            setupHandlerReturn(handlerOneName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2))
+
+            parameter {
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        classDeclaration {
+                            packageName { "paramPackage" }
+                            qualifiedName { "paramPackage.$inputOneClass" }
+                            classKind { ClassKind.CLASS }
+                        }
+                    }
+                    element {
+                        mockkClass(KSClassifierReference::class)
+                    }
+                }
+            }
+        }
+
+        val handlerTwoName = "testHandler2"
+        val inputTwoClass = "TestInputClass2"
+
+        val handlerTwo = functionDeclaration {
+            setupHandlerReturn(handlerTwoName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 1))
+
+            parameter {
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        classDeclaration {
+                            packageName { "paramPackage" }
+                            qualifiedName { "paramPackage.$inputTwoClass" }
+                            classKind { ClassKind.CLASS }
+                        }
+                    }
+                    element {
+                        mockkClass(KSClassifierReference::class)
+                    }
+                }
+            }
+        }
+
+        val generatedCode = generateStringOutput(1) {
+            val resolver = mockkClass(Resolver::class)
+            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+
+            NotificationHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
+            NotificationHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
+            process(resolver)
+        }
+
+        val mediatorCode = generatedCode.drop(2).first()
+        assert(mediatorCode.contains(": Mediator"))
+        assert(mediatorCode.contains("override suspend fun <T : Any> publish"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
+        assert(mediatorCode.contains("is $inputOneClass ->"))
+        assert(mediatorCode.contains("is $inputTwoClass ->"))
+
+        assert(mediatorCode.indexOf(
+            "${handlerOneName.lowercase()}__1()") > mediatorCode.indexOf("${handlerTwoName.lowercase()}__1()"))
+
+        assert(mediatorCode.contains(
+            """launch {
+                |            handler__${handlerOneName.lowercase()}__1().handleRequest(command)
+                |          }
+        """.trimMargin()))
+        assert(mediatorCode.contains(
+            """launch {
+                |            handler__${handlerTwoName.lowercase()}__2().handleRequest(command)
+                |          }
+        """.trimMargin()))
     }
 }

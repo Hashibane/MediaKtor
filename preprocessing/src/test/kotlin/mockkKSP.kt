@@ -131,6 +131,8 @@ fun KSValueParameter.typeRef(body: KSTypeReference.() -> Unit) = mockTypeReferen
 
 fun KSFile.packageName(body: () -> String) = every { packageName } returns mockName(body())
 
+fun KSValueArgument.name(body: () -> String) = every { name } returns mockName(body())
+
 fun KSValueArgument.value(body: () -> Any?) = every { value } returns body()
 
 fun KSAnnotation.annotationType(body: KSTypeReference.() -> Unit) = mockTypeReference {

@@ -28,7 +28,7 @@ fun Application.module() {
     routing {
         get("/test/{text}") {
             val echoText = call.parameters["text"].toString()
-            val response = mediator(Request(echoText))
+            val response = mediator.publish(Request(echoText))
             call.respond(HttpStatusCode.OK, response.toString())
         }
     }

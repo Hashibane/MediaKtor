@@ -1,10 +1,13 @@
 package generators
 
+import annotations.NotificationParallel
 import com.squareup.kotlinpoet.*
 import metadata.HandlerMetadata
+import metadata.NotificationHandlerMetadata
 import kotlin.collections.forEach
 
 data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
+data class NotificationGenerationData(val name: String, val order: Int, val isParallel: Boolean)
 
 fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
     if (handlers.isEmpty()) return null
@@ -58,13 +61,19 @@ fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
 
     mediatorBuilder.addFunction(invokeBuilder.build())
 
-    val notificationHandlerMap = mutableMapOf<TypeName, MutableList<String>>()
+    val notificationHandlerMap = mutableMapOf<TypeName, MutableList<NotificationGenerationData>>()
     handlers.filter { it.notificationHandlerData != null }.forEach {
         if (notificationHandlerMap[it.inputType] == null) {
             notificationHandlerMap[it.inputType] = mutableListOf()
         }
 
-        notificationHandlerMap[it.inputType]?.add(it.generatedClass.simpleName.lowercase())
+        notificationHandlerMap[it.inputType]?.add(
+            NotificationGenerationData(
+                it.generatedClass.simpleName.lowercase(),
+                it.notificationHandlerData?.order!!,
+                it.notificationHandlerData.parallel == NotificationParallel.PARALLEL
+            )
+        )
     }
 
     val publishBuilder = FunSpec.builder("publish")
@@ -73,14 +82,24 @@ fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
         .addParameter(parameterName, TypeVariableName("T"))
         .beginControlFlow("when (%L)", parameterName)
 
+    val coroutineScope = MemberName("kotlinx.coroutines", "coroutineScope")
+    val launch = MemberName("kotlinx.coroutines", "launch")
+
     notificationHandlerMap.forEach { (typeName, handlers) ->
         publishBuilder.beginControlFlow("is %T ->", typeName)
+        publishBuilder.beginControlFlow("%M", coroutineScope)
 
-        handlers.forEach {
-            publishBuilder.addStatement("%L().handleRequest(%L)", it, parameterName)
+        handlers.sortedBy { it.order }.forEach {
+            if (it.isParallel) {
+                publishBuilder.beginControlFlow("%M", launch)
+            }
+            publishBuilder.addStatement("%L().handleRequest(%L)", it.name, parameterName)
+            if (it.isParallel) {
+                publishBuilder.endControlFlow()
+            }
         }
 
-        publishBuilder.endControlFlow()
+        publishBuilder.endControlFlow().endControlFlow()
     }
 
     val notificationLine = "No handler registered for notification $$parameterName"

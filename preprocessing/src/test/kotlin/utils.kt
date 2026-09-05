@@ -52,6 +52,8 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
         }
 
         argument {
+            name { "lifespan" }
+
             value {
                 classDeclaration {
                     packageName { "annotations" }
@@ -69,6 +71,8 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
         }
         if (notificationHandlerData != null) {
             argument {
+                name { "parallel" }
+
                 value {
                     classDeclaration {
                         packageName { "annotations" }
@@ -86,6 +90,8 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
             }
 
             argument {
+                name { "order" }
+
                 value {
                     notificationHandlerData.order
                 }

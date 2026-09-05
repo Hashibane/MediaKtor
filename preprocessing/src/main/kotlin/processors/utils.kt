@@ -59,8 +59,8 @@ fun MutableList<HandlerMetadata>.addMetadata(function: KSFunctionDeclaration, id
         ?.arguments
 
     val notificationData = if (isNotificationHandler) {
-        val parallel = functionAnnotationArgs?.drop(1)?.first()?.value.toString()
-        val order = functionAnnotationArgs?.drop(2)?.first()?.value.toString()
+        val parallel = functionAnnotationArgs?.find { it.name?.asString() == "parallel" }?.value.toString()
+        val order = functionAnnotationArgs?.find { it.name?.asString() == "order" }?.value.toString()
 
         NotificationHandlerMetadata(
             when (parallel) {
@@ -88,7 +88,7 @@ fun MutableList<HandlerMetadata>.addMetadata(function: KSFunctionDeclaration, id
             },
             returnType = returnType.toTypeName(),
             origin = function.containingFile,
-            lifecycle = when (val lifecycle = functionAnnotationArgs?.first()?.value.toString()) {
+            lifecycle = when (val lifecycle = functionAnnotationArgs?.find { it.name?.asString() == "lifespan" }?.value.toString()) {
                 "HandlerLifespan.SINGLE" -> HandlerLifespan.SINGLE
                 "HandlerLifespan.FACTORY" -> HandlerLifespan.FACTORY
                 else -> throw PreprocessingException(

@@ -3,6 +3,7 @@ package handlers
 import annotations.HandlerLifespan
 import annotations.NotificationHandler
 import annotations.RequestHandler
+import kotlinx.coroutines.coroutineScope
 
 data class Request(val content: String)
 
@@ -11,7 +12,7 @@ fun testHandler(arg: Request?): Unit {
 
 }
 
-@NotificationHandler
+@NotificationHandler(order = 2)
 fun testNotifier(arg: Request) {
     println("got the notif 1")
 }

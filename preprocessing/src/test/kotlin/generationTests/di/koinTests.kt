@@ -1,4 +1,4 @@
-package tests.di
+package generationTests.di
 
 import annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.Resolver
@@ -26,9 +26,10 @@ class KoinTests {
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
 
-            HandlerVisitor().visitFunctionDeclaration(funOneDecl, Unit)
-            HandlerVisitor().visitFunctionDeclaration(funTwoDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funOneDecl, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(funTwoDecl, Unit)
             process(resolver)
         }
 

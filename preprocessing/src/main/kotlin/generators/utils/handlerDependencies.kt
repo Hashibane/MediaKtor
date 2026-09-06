@@ -2,9 +2,10 @@ package generators.utils
 
 import com.google.devtools.ksp.processing.Dependencies
 import metadata.HandlerMetadata
+import metadata.HandlerType
 
-fun handlerDependencies(handlers: List<HandlerMetadata>): Dependencies {
-    val sourceFiles = handlers.filter { it.origin != null }.map { it.origin!! }.toTypedArray()
+fun handlerDependencies(handlers: List<HandlerType>): Dependencies {
+    val sourceFiles = handlers.filter { it.handlerMetadata.origin != null }.map { it.handlerMetadata.origin!! }.toTypedArray()
 
     return if (sourceFiles.isNotEmpty())
         Dependencies(aggregating = true, *sourceFiles)
@@ -12,8 +13,8 @@ fun handlerDependencies(handlers: List<HandlerMetadata>): Dependencies {
         Dependencies.ALL_FILES
 }
 
-fun handlerDependencies(handler: HandlerMetadata): Dependencies {
-    val sourceFile = handler.origin
+fun handlerDependencies(handler: HandlerType): Dependencies {
+    val sourceFile = handler.handlerMetadata.origin
     return if (sourceFile != null) {
         Dependencies(aggregating = false, sourceFile)
     } else {

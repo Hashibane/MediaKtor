@@ -3,10 +3,12 @@ package generators
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import metadata.HandlerMetadata
+import metadata.HandlerType
 
 fun generateHandler(
-    metadata: HandlerMetadata
+    handlerType: HandlerType
 ): FileSpec {
+    val metadata = handlerType.handlerMetadata
     val superInterface = ClassName("interfaces", "RequestHandler")
         .parameterizedBy(metadata.inputType, metadata.returnType)
 

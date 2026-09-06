@@ -14,10 +14,12 @@ import generators.di.generateKtorDI
 import generators.generateHandler
 import generators.generateMediator
 import generators.utils.handlerDependencies
+import metadata.HandlerDescriptor
 import metadata.HandlerMetadata
+import metadata.HandlerType
 
 class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
-    val handlerMetadata: MutableList<HandlerMetadata> = mutableListOf()
+    val handlerMetadata: MutableList<HandlerType> = mutableListOf()
     override fun process(resolver: Resolver): List<KSAnnotated> {
         resolver
             .getSymbolsWithAnnotation("annotations.RequestHandler")
@@ -63,7 +65,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            handlerMetadata.addMetadata(function, id, false)
+            handlerMetadata.addMetadata(function, id, HandlerDescriptor.REQUEST_HANDLER)
         }
     }
 
@@ -71,7 +73,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            handlerMetadata.addMetadata(function, id, true)
+            handlerMetadata.addMetadata(function, id, HandlerDescriptor.NOTIFICATION_HANDLER)
         }
     }
 }

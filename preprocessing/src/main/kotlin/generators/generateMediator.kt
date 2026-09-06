@@ -3,13 +3,16 @@ package generators
 import annotations.NotificationParallel
 import com.squareup.kotlinpoet.*
 import metadata.HandlerMetadata
+import metadata.HandlerType
+import metadata.NotificationHandler
 import metadata.NotificationHandlerMetadata
+import metadata.RequestHandler
 import kotlin.collections.forEach
 
 data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
 data class NotificationGenerationData(val name: String, val order: Int, val isParallel: Boolean)
 
-fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
+fun generateMediator(handlers: List<HandlerType>): MediatorMetadata? {
     if (handlers.isEmpty()) return null
 
     val superInterface = ClassName("interfaces", "Mediator")
@@ -21,7 +24,7 @@ fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
     val constructorBuilder = FunSpec.constructorBuilder()
     handlers.forEach {
         // Should be unique due to name generation
-        val className = it.generatedClass
+        val className = it.handlerMetadata.generatedClass
         val propName = className.simpleName.lowercase()
 
         val lambdaType = LambdaTypeName.get(returnType = className).copy(suspending = true)
@@ -46,9 +49,9 @@ fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
         .returns(ANY.copy(nullable = true))
         .beginControlFlow("return when (%L)", parameterName)
 
-    handlers.filter { it.notificationHandlerData == null } .forEach {
-        val propName = it.generatedClass.simpleName.lowercase()
-        invokeBuilder.beginControlFlow("is %T ->", it.inputType)
+    handlers.filter { it is RequestHandler } .forEach {
+        val propName = it.handlerMetadata.generatedClass.simpleName.lowercase()
+        invokeBuilder.beginControlFlow("is %T ->", it.handlerMetadata.inputType)
             .addStatement("%L().handleRequest(%L)", propName, parameterName)
             .endControlFlow()
     }
@@ -62,16 +65,16 @@ fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
     mediatorBuilder.addFunction(invokeBuilder.build())
 
     val notificationHandlerMap = mutableMapOf<TypeName, MutableList<NotificationGenerationData>>()
-    handlers.filter { it.notificationHandlerData != null }.forEach {
-        if (notificationHandlerMap[it.inputType] == null) {
-            notificationHandlerMap[it.inputType] = mutableListOf()
+    handlers.filterIsInstance<NotificationHandler>().forEach {
+        if (notificationHandlerMap[it.handlerMetadata.inputType] == null) {
+            notificationHandlerMap[it.handlerMetadata.inputType] = mutableListOf()
         }
 
-        notificationHandlerMap[it.inputType]?.add(
+        notificationHandlerMap[it.handlerMetadata.inputType]?.add(
             NotificationGenerationData(
-                it.generatedClass.simpleName.lowercase(),
-                it.notificationHandlerData?.order!!,
-                it.notificationHandlerData.parallel == NotificationParallel.PARALLEL
+                it.handlerMetadata.generatedClass.simpleName.lowercase(),
+                it.notificationMetadata.order,
+                it.notificationMetadata.parallel == NotificationParallel.PARALLEL
             )
         )
     }

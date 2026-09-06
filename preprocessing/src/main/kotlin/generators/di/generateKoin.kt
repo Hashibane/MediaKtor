@@ -10,9 +10,10 @@ import com.squareup.kotlinpoet.MemberName.Companion.member
 import com.squareup.kotlinpoet.ksp.writeTo
 import generators.utils.handlerDependencies
 import metadata.HandlerMetadata
+import metadata.HandlerType
 import org.koin.core.module.Module
 
-fun CodeGenerator.generateKtorDI(handlers: List<HandlerMetadata>, mediator: ClassName): FileSpec {
+fun CodeGenerator.generateKtorDI(handlers: List<HandlerType>, mediator: ClassName): FileSpec {
 
     val configName = "provideMediator"
 
@@ -23,9 +24,9 @@ fun CodeGenerator.generateKtorDI(handlers: List<HandlerMetadata>, mediator: Clas
     val single = ClassName("org.koin.core.module", "Module")
         .member("single").simpleName
     handlers.forEach {
-        val className = it.generatedClass
+        val className = it.handlerMetadata.generatedClass
 
-        val lifecycle = if (it.lifecycle == HandlerLifespan.SINGLE)
+        val lifecycle = if (it.handlerMetadata.lifecycle == HandlerLifespan.SINGLE)
             singleOf
         else
             MemberName("org.koin.core.module.dsl", "factoryOf")

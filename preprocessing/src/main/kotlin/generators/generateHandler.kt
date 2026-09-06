@@ -2,42 +2,53 @@ package generators
 
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import errors.PreprocessingException
 import metadata.HandlerMetadata
 import metadata.HandlerType
+import metadata.PipelineHandler
 
 fun generateHandler(
     handlerType: HandlerType
 ): FileSpec {
     val metadata = handlerType.handlerMetadata
-    val superInterface = ClassName("interfaces", "RequestHandler")
-        .parameterizedBy(metadata.inputType, metadata.returnType)
 
     val handlerDeclaration = TypeSpec.classBuilder(metadata.generatedClass.simpleName)
-        .addSuperinterface(superInterface)
 
     val constructorBuilder = FunSpec.constructorBuilder()
 
-    metadata.args.forEach {
-        constructorBuilder.addParameter(it.name, it.type)
+    val isPipeline = handlerType is PipelineHandler
 
-        handlerDeclaration.addProperty(
-            PropertySpec.builder(it.name, it.type).initializer(it.name).addModifiers(KModifier.PRIVATE).build()
-        )
+    metadata.args.forEach {
+        if (it.name != "next" || !isPipeline) {
+            constructorBuilder.addParameter(it.name, it.type)
+
+            handlerDeclaration.addProperty(
+                PropertySpec.builder(it.name, it.type).initializer(it.name).addModifiers(KModifier.PRIVATE).build()
+            )
+        }
     }
 
     handlerDeclaration.primaryConstructor(constructorBuilder.build())
 
     val propertySpecs = handlerDeclaration.propertySpecs.toTypedArray()
 
+    val functionDeclaration = FunSpec.builder("handleRequest")
+        .addModifiers(KModifier.SUSPEND)
+        .addParameter("request", metadata.inputType)
+
+    if (isPipeline) {
+        val next = handlerType.handlerMetadata.args.find { it.name == "next" }!!
+
+        functionDeclaration.addParameter("next", next.type)
+    }
+
     handlerDeclaration.addFunction(
-        FunSpec.builder("handleRequest")
-            .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE)
-            .addParameter("request", metadata.inputType)
-            .returns(metadata.returnType)
-            .addStatement("return %M(%L, ${propertySpecs.joinToString(", ") { "%N" }})",
-                metadata.memberName, "request", *propertySpecs)
-            .build()
-    )
+        functionDeclaration.returns(metadata.returnType)
+            .addStatement(
+                "return %M(%L, ${propertySpecs.joinToString(", ") { "%N" }} ${if (isPipeline) "next=next" else ""})",
+                metadata.memberName, "request", *propertySpecs
+            )
+            .build())
 
     val handlerClass = handlerDeclaration.build()
 

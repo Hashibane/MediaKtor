@@ -1,3 +1,5 @@
 package metadata
 
-data class PipelineMetadata(val order: Int)
+import com.squareup.kotlinpoet.TypeName
+
+data class PipelineMetadata(val outputType: TypeName, val order: Int)

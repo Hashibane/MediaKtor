@@ -27,6 +27,7 @@ class KoinTests {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(funOneDecl, Unit)
             RequestHandlerVisitor().visitFunctionDeclaration(funTwoDecl, Unit)

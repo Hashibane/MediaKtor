@@ -6,7 +6,9 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.ksp.toTypeName
+import com.squareup.kotlinpoet.ksp.toTypeVariableName
 import errors.PreprocessingException
 import metadata.HandlerDescriptor
 import metadata.HandlerMetadata
@@ -17,14 +19,13 @@ import metadata.PipelineHandler
 import metadata.PipelineMetadata
 import metadata.RequestHandler
 
-fun MutableList<HandlerType>.verifyMetadata() {
-    val requestHandlerMetadata = this.filterIsInstance<RequestHandler>()
-    val inputGroups = requestHandlerMetadata.groupBy { it.handlerMetadata.inputType }
-    inputGroups.forEach { name, metadata ->
-        if (metadata.size > 1) {
+fun MutableMap<TypeName, MutableList<HandlerType>>.verifyMetadata() {
+    forEach { (name, metadata) ->
+        val filteredMetadata = metadata.filterIsInstance<RequestHandler>()
+        if (filteredMetadata.size > 1) {
             throw PreprocessingException("The input types must be unique for each request handler. Found request" +
-                    "type $name for generated classes ${metadata.first().handlerMetadata.generatedClass.simpleName} and ${
-                        metadata.drop(1).first().handlerMetadata.generatedClass.simpleName}")
+                    "type $name for generated classes ${filteredMetadata.first().handlerMetadata.generatedClass.simpleName} and ${
+                        filteredMetadata.drop(1).first().handlerMetadata.generatedClass.simpleName}")
         }
     }
 }
@@ -110,10 +111,22 @@ fun MutableList<HandlerType>.addMetadata(function: KSFunctionDeclaration, id: In
         }
         HandlerDescriptor.PIPELINE_HANDLER -> {
             val order = functionAnnotationArgs?.find { it.name?.asString() == "order" }?.value.toString()
-            val pipelineMetadata = PipelineMetadata(order.toInt())
-            add(PipelineHandler(handlerMetadata, pipelineMetadata))
+            val nextType = function.parameters.find { it.name?.asString() == "next" }?.type?.resolve()
+            if (nextType == null)
+                throw PreprocessingException("Pipeline handler $functionName should have one argument named \"next\" of type: " +
+                        "(${requestArg.name?.asString()}) -> <HandlerOutputType>")
+
+            if (nextType.isFunctionType || nextType.isSuspendFunctionType) {
+                val returnType = nextType.declaration.typeParameters.drop(1).firstOrNull() ?:
+                    throw PreprocessingException("There was an error during resolution of type $returnType for" +
+                            "handler $functionName")
+
+                val pipelineMetadata = PipelineMetadata(returnType.toTypeVariableName(), order.toInt())
+                add(PipelineHandler(handlerMetadata, pipelineMetadata))
+            } else {
+                throw PreprocessingException("Pipeline handler $functionName argument next should be of type:" +
+                        "(${requestArg.name?.asString()}) -> <HandlerOutputType> and is of type $nextType")
+            }
         }
     }
-
-
 }

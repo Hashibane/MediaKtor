@@ -12,8 +12,8 @@ import kotlin.collections.forEach
 data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
 data class NotificationGenerationData(val name: String, val order: Int, val isParallel: Boolean)
 
-fun generateMediator(handlers: List<HandlerType>): MediatorMetadata? {
-    if (handlers.isEmpty()) return null
+fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>): MediatorMetadata? {
+    if (handlerRegistry.isEmpty()) return null
 
     val superInterface = ClassName("interfaces", "Mediator")
 
@@ -22,21 +22,25 @@ fun generateMediator(handlers: List<HandlerType>): MediatorMetadata? {
         .addSuperinterface(superInterface)
 
     val constructorBuilder = FunSpec.constructorBuilder()
-    handlers.forEach {
-        // Should be unique due to name generation
-        val className = it.handlerMetadata.generatedClass
-        val propName = className.simpleName.lowercase()
+    handlerRegistry.forEach { (_, handlers) ->
+        handlers.forEach {
+            // Should be unique due to name generation
+            val className = it.handlerMetadata.generatedClass
+            val propName = className.simpleName.lowercase()
 
-        val lambdaType = LambdaTypeName.get(returnType = className).copy(suspending = true)
-        constructorBuilder.addParameter(propName, lambdaType)
+            val lambdaType = LambdaTypeName.get(returnType = className).copy(suspending = true)
+            constructorBuilder.addParameter(propName, lambdaType)
 
-        mediatorBuilder.addProperty(
-            PropertySpec.builder(propName, lambdaType)
-                .initializer(propName)
-                .addModifiers(KModifier.PRIVATE)
-                .build()
-        )
+            mediatorBuilder.addProperty(
+                PropertySpec.builder(propName, lambdaType)
+                    .initializer(propName)
+                    .addModifiers(KModifier.PRIVATE)
+                    .build()
+            )
+        }
     }
+
+    // TODO : write a comparator for two types so that it checks if one is child of another
 
     mediatorBuilder.primaryConstructor(constructorBuilder.build())
 
@@ -49,7 +53,7 @@ fun generateMediator(handlers: List<HandlerType>): MediatorMetadata? {
         .returns(ANY.copy(nullable = true))
         .beginControlFlow("return when (%L)", parameterName)
 
-    handlers.filter { it is RequestHandler } .forEach {
+    handlers.filter { it is RequestHandler }.forEach {
         val propName = it.handlerMetadata.generatedClass.simpleName.lowercase()
         invokeBuilder.beginControlFlow("is %T ->", it.handlerMetadata.inputType)
             .addStatement("%L().handleRequest(%L)", propName, parameterName)

@@ -2,11 +2,13 @@ package processors
 
 import annotations.HandlerLifespan
 import annotations.NotificationParallel
+import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeVariableName
 import errors.PreprocessingException
@@ -19,6 +21,12 @@ import metadata.PipelineHandler
 import metadata.PipelineMetadata
 import metadata.RequestHandler
 
+fun <T, R> MutableMap<T, MutableList<R>>.extend(key: T, element: R) {
+    val list = get(key) ?: mutableListOf()
+    list.add(element)
+    this[key] = list
+}
+
 fun MutableMap<TypeName, MutableList<HandlerType>>.verifyMetadata() {
     forEach { (name, metadata) ->
         val filteredMetadata = metadata.filterIsInstance<RequestHandler>()
@@ -30,18 +38,26 @@ fun MutableMap<TypeName, MutableList<HandlerType>>.verifyMetadata() {
     }
 }
 
-fun MutableList<HandlerType>.addMetadata(function: KSFunctionDeclaration, id: Int, handlerDescriptor: HandlerDescriptor) {
+fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
+                function: KSFunctionDeclaration, id: Int,
+                handlerDescriptor: HandlerDescriptor,
+                typeMetadata: MutableMap<TypeName, MutableList<TypeName>>) {
     val functionName = function.simpleName.asString()
 
     val requestArg = function.parameters.firstOrNull()
         ?: throw PreprocessingException("Handler $functionName must have at least one argument - the request. " +
                 "Pass argument of type Unit if no arguments are needed.")
 
-    val resolvedRequestArg = requestArg.type.resolve()
+    val resolvedRequestArg = TypeCache[requestArg.type]
     if (resolvedRequestArg.arguments.isNotEmpty()) {
         throw PreprocessingException("Type $resolvedRequestArg of " +
                 "function $functionName cannot be parametrized by other types.")
     }
+
+    (resolvedRequestArg.declaration as? KSClassDeclaration)?.superTypes?.forEach {
+        typeMetadata.extend(resolvedRequestArg.toTypeName(), TypeCache[it].toTypeName())
+    }
+
 
     val args = function.parameters.drop(1)
 
@@ -49,7 +65,7 @@ fun MutableList<HandlerType>.addMetadata(function: KSFunctionDeclaration, id: In
             "of return type of handler $functionName.")
 
     if (handlerDescriptor == HandlerDescriptor.NOTIFICATION_HANDLER) {
-        val declaration = returnType.resolve().declaration
+        val declaration = TypeCache[returnType].declaration
         if (declaration.qualifiedName!!.asString() != "kotlin.Unit") {
             throw PreprocessingException("Notification handler should return the Unit type. " +
                     "Caused by function $functionName")
@@ -74,11 +90,11 @@ fun MutableList<HandlerType>.addMetadata(function: KSFunctionDeclaration, id: In
         inputType = resolvedRequestArg.toTypeName(),
         args = args.map {
             val propName = it.name?.asString()!! // cannot be null
-            val typeName = it.type.toTypeName()
+            val typeName = TypeCache[it.type].toTypeName()
 
             ParameterSpec.builder(propName, typeName).build()
         },
-        returnType = returnType.toTypeName(),
+        returnType = TypeCache[returnType].toTypeName(),
         origin = function.containingFile,
         lifecycle = when (val lifecycle = functionAnnotationArgs?.find { it.name?.asString() == "lifespan" }?.value.toString()) {
             "HandlerLifespan.SINGLE" -> HandlerLifespan.SINGLE
@@ -91,7 +107,7 @@ fun MutableList<HandlerType>.addMetadata(function: KSFunctionDeclaration, id: In
     )
 
     when (handlerDescriptor) {
-        HandlerDescriptor.REQUEST_HANDLER -> add(RequestHandler(handlerMetadata))
+        HandlerDescriptor.REQUEST_HANDLER -> handlerRegistry.extend(resolvedRequestArg.toTypeName(), RequestHandler(handlerMetadata))
         HandlerDescriptor.NOTIFICATION_HANDLER -> {
             val parallel = functionAnnotationArgs?.find { it.name?.asString() == "parallel" }?.value.toString()
             val order = functionAnnotationArgs?.find { it.name?.asString() == "order" }?.value.toString()
@@ -107,22 +123,24 @@ fun MutableList<HandlerType>.addMetadata(function: KSFunctionDeclaration, id: In
                 },
                 order.toInt()
             )
-            add(NotificationHandler(handlerMetadata, notificationMetadata))
+            handlerRegistry.extend(resolvedRequestArg.toTypeName(), NotificationHandler(handlerMetadata, notificationMetadata))
         }
         HandlerDescriptor.PIPELINE_HANDLER -> {
             val order = functionAnnotationArgs?.find { it.name?.asString() == "order" }?.value.toString()
-            val nextType = function.parameters.find { it.name?.asString() == "next" }?.type?.resolve()
-            if (nextType == null)
+            val nextTypeCandidate = function.parameters.find { it.name?.asString() == "next" }?.type
+
+            if (nextTypeCandidate == null)
                 throw PreprocessingException("Pipeline handler $functionName should have one argument named \"next\" of type: " +
                         "(${requestArg.name?.asString()}) -> <HandlerOutputType>")
 
+            val nextType = TypeCache[nextTypeCandidate]
             if (nextType.isFunctionType || nextType.isSuspendFunctionType) {
                 val returnType = nextType.declaration.typeParameters.drop(1).firstOrNull() ?:
                     throw PreprocessingException("There was an error during resolution of type $returnType for" +
                             "handler $functionName")
 
                 val pipelineMetadata = PipelineMetadata(returnType.toTypeVariableName(), order.toInt())
-                add(PipelineHandler(handlerMetadata, pipelineMetadata))
+                handlerRegistry.extend(resolvedRequestArg.toTypeName(), PipelineHandler(handlerMetadata, pipelineMetadata))
             } else {
                 throw PreprocessingException("Pipeline handler $functionName argument next should be of type:" +
                         "(${requestArg.name?.asString()}) -> <HandlerOutputType> and is of type $nextType")

@@ -30,6 +30,7 @@ internal fun mockDeclaration(body: KSDeclaration.(KSDeclaration) -> Unit) {
 internal fun mockClassDeclaration(body: KSClassDeclaration.(KSClassDeclaration) -> Unit) {
     val declaration = mockkClass(KSClassDeclaration::class)
     every { declaration.parentDeclaration } returns null
+    every { declaration.superTypes } returns sequenceOf()
     declaration.body(declaration)
 }
 
@@ -83,6 +84,17 @@ fun KSClassDeclaration.classKind(body: () -> ClassKind) = every { classKind } re
 fun KSClassDeclaration.parentClassDeclaration(body: KSClassDeclaration.() -> Unit) = mockClassDeclaration {
     body()
     every { this@parentClassDeclaration.parentDeclaration } returns this
+}
+
+fun KSClassDeclaration.superType(body: KSTypeReference.() -> Unit) = mockTypeReference {
+    val typeRef = mockkClass(KSTypeReference::class)
+    every { typeRef.element } returns null
+    typeRef.body()
+
+    val newArgs = superTypes.toMutableList()
+    newArgs.add(typeRef)
+
+    every { superTypes } returns newArgs.asSequence()
 }
 
 fun KSType.declaration(body: KSDeclaration.() -> Unit) = mockDeclaration {

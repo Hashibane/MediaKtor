@@ -9,20 +9,31 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
 import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.TypeSpec
 import com.squareup.kotlinpoet.ksp.writeTo
-import errors.PreprocessingException
 import generators.di.generateKtorDI
 import generators.generateHandler
 import generators.generateMediator
 import generators.utils.handlerDependencies
 import metadata.HandlerDescriptor
-import metadata.HandlerMetadata
 import metadata.HandlerType
-import processors.verifyMetadata
 
 class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
     val handlerMetadata: MutableMap<TypeName, MutableList<HandlerType>> = mutableMapOf()
+    val inputTypeMetadata: MutableMap<TypeName, MutableList<TypeName>> = mutableMapOf()
+
+    // o1 <: o2 <=> compare > 0
+    inner class TypeSorter : Comparator<TypeName>  {
+        override fun compare(o1: TypeName?, o2: TypeName?): Int =
+            if (inputTypeMetadata[o2]?.contains(o1) == true) {
+                return 1
+            }
+            else if (o2 == null) {
+                return 0
+            } else {
+                return -1
+            }
+    }
+
     override fun process(resolver: Resolver): List<KSAnnotated> {
         resolver
             .getSymbolsWithAnnotation("annotations.RequestHandler")
@@ -49,12 +60,13 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
             }
         }
 
-        val mediatorMetadata = generateMediator(handlerMetadata)
-        val dependencies = handlerDependencies(handlerMetadata)
+        val allHandlers = handlerMetadata.flatMap { it.value }
+        val mediatorMetadata = generateMediator(handlerMetadata, TypeSorter())
+        val dependencies = handlerDependencies(allHandlers)
         mediatorMetadata?.fileSpec?.writeTo(codeGenerator, dependencies)
 
         if (mediatorMetadata != null) {
-            val diSpec = codeGenerator.generateKtorDI(handlerMetadata, mediatorMetadata.className)
+            val diSpec = codeGenerator.generateKtorDI(allHandlers, mediatorMetadata.className)
             diSpec.writeTo(codeGenerator, dependencies)
         }
 
@@ -75,7 +87,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            handlerMetadata.addMetadata(function, id, HandlerDescriptor.REQUEST_HANDLER)
+            addMetadata(handlerMetadata, function, id, HandlerDescriptor.REQUEST_HANDLER, inputTypeMetadata)
         }
     }
 
@@ -83,7 +95,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            handlerMetadata.addMetadata(function, id, HandlerDescriptor.NOTIFICATION_HANDLER)
+            addMetadata(handlerMetadata, function, id, HandlerDescriptor.NOTIFICATION_HANDLER, inputTypeMetadata)
         }
     }
 
@@ -91,7 +103,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            handlerMetadata.addMetadata(function, id, HandlerDescriptor.PIPELINE_HANDLER)
+            addMetadata(handlerMetadata, function, id, HandlerDescriptor.PIPELINE_HANDLER, inputTypeMetadata)
         }
     }
 }

@@ -97,7 +97,7 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
                 val pipelineReturn = handler.handlerMetadata.returnType
 
                 // UNIT is valid for notification handlers.
-                if (pipelineReturn != handlerReturn && handlerReturn != UNIT) {
+                if (pipelineReturn != handlerReturn && pipelineReturn != UNIT && handlerReturn != UNIT) {
                     throw PreprocessingException("All pipelines must return type of the corresponding request handler: " +
                             "${it.handlerMetadata.generatedClass.simpleName}. " +
                             "Expected type: $handlerReturn, current type: $pipelineReturn")

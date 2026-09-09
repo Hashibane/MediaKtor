@@ -907,18 +907,17 @@ class MediatorTests {
         assert(mediatorCode.indexOf(
             "is $inputTwoType ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
     }
-}
 
-/*
-   input:
+    /*
+    input:
        InputType1 <: InputType2
        rq1 -> RequestHandler(paramPackage.InputType1) : InputType2
-       rq2 -> RequestHandler(paramPackage.InputType1?) : InputType2
+       rq2 -> RequestHandler(paramPackage.InputType1?) : Unit
        rq3 -> RequestHandler(paramPackage.InputType2) : InputType2
        rq4 -> RequestHandler(paramPackage.InputType2?) : InputType2
 
-       nf1 -> NotificationHandler(paramPackage.InputType2?)
-       nf2 -> NotificationHandler(paramPackage.InputType1?)
+       nf1 -> NotificationHandler(paramPackage.InputType1?)
+       nf2 -> NotificationHandler(paramPackage.InputType2?)
 
        pl4 -> PipelineBehavior(paramPackage.InputType2?): InputType2
        pl3 -> PipelineBehaviour(paramPackage.InputType2?): Unit
@@ -926,13 +925,552 @@ class MediatorTests {
        pl1 -> PipelineBehavior(paramPackage.InputType1): InputType2
 
        [InputType1 <: InputType2, InputType1 <: InputType1?, InputType2 <: InputType2?, InputType1? <: InputType2?]
-   output:
+    output:
        invoke()
            is InputType1 -> pl1 pl4 rq1
-           is InputType1? -> pl4 rq2
+           is InputType1? -> pl2 pl3 rq2
            is InputType2 -> pl4 rq3
            is InputType2? -> pl4 rq4
        publish()
            is InputType1? -> pl2 pl3 nf1 nf2
-           is InputType2? -> pl3 nf1
-*/
+           is InputType2? -> pl3 nf2
+    */
+    @Test
+    fun `multiple pipeline behaviors with complex type hierarchy and notification handlers`() {
+        val inputPackage = "paramPackage"
+        val inputOneType = "InputType1"
+        val inputTwoType = "InputType2"
+
+        val returnPackage = "returnPackage"
+        val returnType = "ReturnType"
+
+        val inputTwoClass: KSTypeReference.(Nullability) -> Unit = { nullability ->
+            type {
+                nullability { nullability }
+                classDeclaration {
+                    packageName { inputPackage }
+                    qualifiedName { "$inputPackage.$inputTwoType" }
+                    classKind { ClassKind.CLASS }
+                }
+            }
+        }
+
+        val inputOneClass: KSTypeReference.(Nullability) -> Unit = { nullability ->
+            type {
+                nullability { nullability }
+                classDeclaration {
+                    packageName { inputPackage }
+                    qualifiedName { "$inputPackage.$inputOneType" }
+                    classKind { ClassKind.CLASS }
+
+                    superType {
+                        inputTwoClass(Nullability.NOT_NULL)
+                    }
+                }
+            }
+        }
+
+
+
+        // -- handlers
+
+        val returnTypePart: KSTypeReference.() -> Unit = {
+            type {
+                nullability { Nullability.NULLABLE }
+                classDeclaration {
+                    packageName { returnPackage }
+                    qualifiedName { "$returnPackage.$returnType" }
+                    classKind { ClassKind.CLASS }
+                }
+            }
+        }
+
+        val unitReturnType: KSTypeReference.() -> Unit = {
+            type {
+                nullability { Nullability.NOT_NULL }
+                classDeclaration {
+                    packageName { "kotlin" }
+                    qualifiedName { "kotlin.Unit" }
+                    classKind { ClassKind.OBJECT }
+                }
+            }
+        }
+
+        val handlerOneName = "handlerOne"
+        val handlerOne = functionDeclaration {
+            setupHandler(handlerOneName)
+
+            parameter {
+                typeRef {
+                    inputOneClass(Nullability.NOT_NULL)
+                }
+            }
+
+            returnType {
+                returnTypePart()
+            }
+        }
+
+
+        val handlerTwoName = "handlerTwo"
+        val handlerTwo = functionDeclaration {
+            setupHandler(handlerTwoName)
+
+            parameter {
+                typeRef {
+                    inputOneClass(Nullability.NULLABLE)
+                }
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+        val handlerThreeName = "handlerThree"
+        val handlerThree = functionDeclaration {
+            setupHandler(handlerThreeName)
+
+            parameter {
+                typeRef {
+                    inputTwoClass(Nullability.NOT_NULL)
+                }
+            }
+
+            returnType {
+                returnTypePart()
+            }
+        }
+
+        val handlerFourName = "handlerFour"
+        val handlerFour = functionDeclaration {
+            setupHandler(handlerFourName)
+
+            parameter {
+                typeRef {
+                    inputTwoClass(Nullability.NULLABLE)
+                }
+            }
+
+            returnType {
+                returnTypePart()
+            }
+        }
+
+        // -- notifications
+
+        val notificationOneName = "handlerOne"
+        val notificationOne = functionDeclaration {
+            setupHandler(notificationOneName,
+                additionalData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2))
+
+            parameter {
+                typeRef {
+                    inputOneClass(Nullability.NULLABLE)
+                }
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+
+        val notificationTwoName = "handlerOne"
+        val notificationTwo = functionDeclaration {
+            setupHandler(notificationTwoName,
+                additionalData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
+
+            parameter {
+                typeRef {
+                    inputTwoClass(Nullability.NULLABLE)
+                }
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+        // -- pipelines
+
+        val pipelineOneName = "pipelineOne"
+        val pipelineOne = functionDeclaration {
+            setupHandler(pipelineOneName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 0))
+
+            parameter {
+                name { "request" }
+
+                typeRef {
+                    inputOneClass(Nullability.NOT_NULL)
+                }
+            }
+
+            parameter {
+                name { "next" }
+
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        isSuspendFunctionType { true }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                inputOneClass(Nullability.NOT_NULL)
+                            }
+                        }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                returnTypePart()
+                            }
+                        }
+
+                        functionDeclaration {
+                            typeParameter {}
+
+                            typeParameter {
+                                name { "$returnPackage.$returnType" }
+                            }
+
+                            parameter {
+                                typeRef {
+                                    inputOneClass(Nullability.NOT_NULL)
+                                }
+                            }
+
+                            returnType {
+                                returnTypePart()
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            returnType {
+                returnTypePart()
+            }
+        }
+
+        val pipelineTwoName = "pipelineTwo"
+        val pipelineTwo = functionDeclaration {
+            setupHandler(pipelineTwoName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 2))
+
+            parameter {
+                name { "request" }
+
+                typeRef {
+                    inputOneClass(Nullability.NULLABLE)
+                }
+            }
+
+            parameter {
+                name { "next" }
+
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        isSuspendFunctionType { true }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                inputOneClass(Nullability.NULLABLE)
+                            }
+                        }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                unitReturnType()
+                            }
+                        }
+
+                        functionDeclaration {
+                            typeParameter {}
+
+                            typeParameter {
+                                name { "$returnPackage.$returnType" }
+                            }
+
+                            parameter {
+                                typeRef {
+                                    inputOneClass(Nullability.NULLABLE)
+                                }
+                            }
+
+                            returnType {
+                                unitReturnType()
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+        val pipelineThreeName = "pipelineThree"
+        val pipelineThree = functionDeclaration {
+            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1))
+
+            parameter {
+                name { "request" }
+
+                typeRef {
+                    inputTwoClass(Nullability.NULLABLE)
+                }
+            }
+
+            parameter {
+                name { "next" }
+
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        isSuspendFunctionType { true }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                inputTwoClass(Nullability.NULLABLE)
+                            }
+                        }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                unitReturnType()
+                            }
+                        }
+
+                        functionDeclaration {
+                            typeParameter {}
+
+                            typeParameter {
+                                name { "$returnPackage.$returnType" }
+                            }
+
+                            parameter {
+                                typeRef {
+                                    inputTwoClass(Nullability.NULLABLE)
+                                }
+                            }
+
+                            returnType {
+                                unitReturnType()
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+        val pipelineFourName = "pipelineFour"
+        val pipelineFour = functionDeclaration {
+            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class), Int.MIN_VALUE))
+
+            parameter {
+                name { "request" }
+
+                typeRef {
+                    inputTwoClass(Nullability.NULLABLE)
+                }
+            }
+
+            parameter {
+                name { "next" }
+
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        isSuspendFunctionType { true }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                inputTwoClass(Nullability.NULLABLE)
+                            }
+                        }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                returnTypePart()
+                            }
+                        }
+
+                        functionDeclaration {
+                            typeParameter {}
+
+                            typeParameter {
+                                name { "$returnPackage.$returnType" }
+                            }
+
+                            parameter {
+                                typeRef {
+                                    inputTwoClass(Nullability.NULLABLE)
+                                }
+                            }
+
+                            returnType {
+                                returnTypePart()
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            returnType {
+                returnTypePart()
+            }
+        }
+
+        val generatedCode = generateStringOutput(1) {
+            val resolver = mockkClass(Resolver::class)
+            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+
+            RequestHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(handlerThree, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(handlerFour, Unit)
+
+            NotificationHandlerVisitor().visitFunctionDeclaration(notificationOne, Unit)
+            NotificationHandlerVisitor().visitFunctionDeclaration(notificationTwo, Unit)
+
+            PipelineHandlerVisitor().visitFunctionDeclaration(pipelineOne, Unit)
+            PipelineHandlerVisitor().visitFunctionDeclaration(pipelineTwo, Unit)
+            PipelineHandlerVisitor().visitFunctionDeclaration(pipelineThree, Unit)
+            PipelineHandlerVisitor().visitFunctionDeclaration(pipelineFour, Unit)
+            process(resolver)
+        }
+
+        val mediatorCode = generatedCode.drop(2).first()
+        println(mediatorCode)
+        assert(mediatorCode.contains(": Mediator"))
+        assert(mediatorCode.contains("override suspend operator fun <T : Any> invoke"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${handlerThreeName}__3"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${handlerFourName}__4"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${notificationOneName}__5"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${notificationTwoName}__6"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineOneName}__7"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineTwoName}__8"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineThreeName}__9"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineFourName}__10"))
+        assert(mediatorCode.contains("is $inputOneType ->"))
+        assert(mediatorCode.contains("is $inputOneType? ->"))
+        assert(mediatorCode.contains("is $inputTwoType ->"))
+        assert(mediatorCode.contains("is $inputTwoType? ->"))
+
+        assert(
+            mediatorCode.contains(
+                """is InputType1 -> {
+      handler__${pipelineFourName.lowercase()}__10().handleRequest(command) {
+        handler__${pipelineOneName.lowercase()}__7().handleRequest(command) {
+          handler__${handlerOneName.lowercase()}__1().handleRequest(command)
+        }
+      }
+    }""".trimMargin()
+            )
+        )
+
+
+
+        assert(
+            mediatorCode.contains(
+                """is InputType2 -> {
+      handler__${pipelineFourName.lowercase()}__10().handleRequest(command) {
+        handler__${handlerThreeName.lowercase()}__3().handleRequest(command)
+      }
+    }""".trimMargin()
+            )
+        )
+
+        assert(
+            mediatorCode.contains(
+                """is InputType1? -> {
+      handler__${pipelineThreeName.lowercase()}__9().handleRequest(command) {
+        handler__${pipelineTwoName.lowercase()}__8().handleRequest(command) {
+          handler__${handlerTwoName.lowercase()}__2().handleRequest(command)
+        }
+      }
+    }""".trimMargin()
+            )
+        )
+
+        assert(
+            mediatorCode.contains(
+                """is InputType2? -> {
+      handler__${pipelineFourName.lowercase()}__10().handleRequest(command) {
+        handler__${handlerFourName.lowercase()}__4().handleRequest(command)
+      }
+    }""".trimMargin()
+            )
+        )
+
+        assert(mediatorCode.indexOf(
+            "is $inputOneType ->") < mediatorCode.indexOf("is $inputTwoType ->"))
+        assert(mediatorCode.indexOf(
+            "is $inputOneType ->") < mediatorCode.indexOf("is $inputOneType? ->"))
+        assert(mediatorCode.indexOf(
+            "is $inputOneType ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+
+        assert(mediatorCode.indexOf(
+            "is $inputOneType? ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+
+        assert(mediatorCode.indexOf(
+            "is $inputTwoType ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+
+        assert(
+            mediatorCode.contains(
+                """is InputType1? -> {
+        coroutineScope {
+          handler__${pipelineThreeName.lowercase()}__9().handleRequest(command) {
+            handler__${pipelineTwoName.lowercase()}__8().handleRequest(command) {
+              launch {
+                handler__${notificationOneName.lowercase()}__5().handleRequest(command)
+              }
+            }
+          }
+        }
+      }""".trimMargin()
+            )
+        )
+
+        assert(
+            mediatorCode.contains(
+                """is InputType2? -> {
+        coroutineScope {
+          handler__${pipelineThreeName.lowercase()}__9().handleRequest(command) {
+            handler__${notificationOneName.lowercase()}__6().handleRequest(command)
+          }
+        }
+      }""".trimMargin()
+            )
+        )
+    }
+}

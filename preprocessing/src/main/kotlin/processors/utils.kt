@@ -2,9 +2,13 @@ package processors
 
 import annotations.HandlerLifespan
 import annotations.NotificationParallel
+import annotations.PipelineBehavior
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
+import com.google.devtools.ksp.symbol.KSType
+import com.google.devtools.ksp.symbol.Nullability
 import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
@@ -20,6 +24,19 @@ import metadata.NotificationHandlerMetadata
 import metadata.PipelineHandler
 import metadata.PipelineMetadata
 import metadata.RequestHandler
+
+
+fun KSType.toTypeNameOrLambda(): TypeName {
+    if (declaration is KSFunctionDeclaration) {
+        return LambdaTypeName.get(
+            parameters = (declaration as KSFunctionDeclaration).parameters
+                .map { ParameterSpec.builder(it.name?.asString() ?: "_", TypeCache[it.type].toTypeName()).build() },
+            returnType = (declaration as KSFunctionDeclaration).returnType!!.toTypeName(),
+        )
+    }
+    else
+        return toTypeName()
+}
 
 fun <T, R> MutableMap<T, MutableList<R>>.extend(key: T, element: R) {
     val list = get(key) ?: mutableListOf()
@@ -54,8 +71,16 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
                 "function $functionName cannot be parametrized by other types.")
     }
 
-    (resolvedRequestArg.declaration as? KSClassDeclaration)?.superTypes?.forEach {
-        typeMetadata.extend(resolvedRequestArg.toTypeName(), TypeCache[it].toTypeName())
+    val resolvedClass = resolvedRequestArg.declaration as? KSClassDeclaration
+
+    if (resolvedClass != null && resolvedRequestArg.nullability == Nullability.NOT_NULL) {
+        val typename = resolvedRequestArg.toTypeName()
+        typeMetadata.extend(typename, typename.copy(nullable = true))
+    }
+    resolvedClass?.superTypes?.forEach {
+        if (resolvedRequestArg.nullability == Nullability.NOT_NULL)
+            typeMetadata.extend(resolvedRequestArg.toTypeName(), TypeCache[it].toTypeName())
+        typeMetadata.extend(resolvedRequestArg.toTypeName(), TypeCache[it].toTypeName().copy(nullable = true))
     }
 
 
@@ -77,7 +102,7 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
     val annotationClassName = when (handlerDescriptor) {
         HandlerDescriptor.REQUEST_HANDLER -> annotations.RequestHandler::class.simpleName!!
         HandlerDescriptor.NOTIFICATION_HANDLER -> annotations.NotificationHandler::class.simpleName!!
-        HandlerDescriptor.PIPELINE_HANDLER -> annotations.PipelineBehavior::class.simpleName!!
+        HandlerDescriptor.PIPELINE_HANDLER -> PipelineBehavior::class.simpleName!!
     }
 
     val functionAnnotationArgs = function.annotations
@@ -90,7 +115,7 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
         inputType = resolvedRequestArg.toTypeName(),
         args = args.map {
             val propName = it.name?.asString()!! // cannot be null
-            val typeName = TypeCache[it.type].toTypeName()
+            val typeName = TypeCache[it.type].toTypeNameOrLambda()
 
             ParameterSpec.builder(propName, typeName).build()
         },
@@ -134,16 +159,35 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
                         "(${requestArg.name?.asString()}) -> <HandlerOutputType>")
 
             val nextType = TypeCache[nextTypeCandidate]
-            if (nextType.isFunctionType || nextType.isSuspendFunctionType) {
-                val returnType = nextType.declaration.typeParameters.drop(1).firstOrNull() ?:
-                    throw PreprocessingException("There was an error during resolution of type $returnType for" +
-                            "handler $functionName")
+            if (nextType.isSuspendFunctionType) {
+                val requestType = nextType.arguments.firstOrNull()
+
+                if (requestType == null) {
+                    val isNullable = if (TypeCache[requestArg.type].nullability == Nullability.NULLABLE) "?" else ""
+                    throw PreprocessingException(
+                    "The expected type of the \"next\" argument of handler $functionName is: " +
+                            "suspend (${TypeCache[requestArg.type].declaration.qualifiedName?.asString()}${isNullable}) -> <HandlerOutputType>"
+                )}
+
+                if (requestType.toTypeName() != resolvedRequestArg.toTypeName()) {
+                    val isNullalbe = if (resolvedRequestArg.nullability == Nullability.NULLABLE) "?" else ""
+                    throw PreprocessingException("The request type must be the same as type of \"next\" parameter." +
+                            " Expected type suspend (${TypeCache[requestArg.type].declaration.simpleName.asString()}$isNullalbe) ->" +
+                            " ${TypeCache[returnType].declaration.simpleName.asString()} on handler $functionName")
+                }
+
+
+                val returnType = nextType.declaration.typeParameters.drop(1).firstOrNull()
+
+                if (returnType == null)
+                    throw PreprocessingException("There was an error during resolution of return type $returnType for " +
+                            "handler $functionName of \"next\" argument")
 
                 val pipelineMetadata = PipelineMetadata(returnType.toTypeVariableName(), order.toInt())
                 handlerRegistry.extend(resolvedRequestArg.toTypeName(), PipelineHandler(handlerMetadata, pipelineMetadata))
             } else {
                 throw PreprocessingException("Pipeline handler $functionName argument next should be of type:" +
-                        "(${requestArg.name?.asString()}) -> <HandlerOutputType> and is of type $nextType")
+                        " suspend (${requestArg.name?.asString()}) -> <HandlerOutputType> and is of type $nextType")
             }
         }
     }

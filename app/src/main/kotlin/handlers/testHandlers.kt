@@ -8,9 +8,9 @@ import kotlinx.coroutines.coroutineScope
 
 data class Request(val content: String)
 
-/*
+
 @RequestHandler(HandlerLifespan.SINGLE)
-fun testHandler(arg: Request?): Unit {
+fun testHandler(arg: Request): Unit {
 
 }
 
@@ -21,12 +21,17 @@ fun testNotifier(arg: Request) {
 
 
 @NotificationHandler
-fun testNotifierTwo(arg: Request) {
+fun testNotifierTwo(arg: Request?) {
     println("got the notif 2")
 }
-*/
+
  
+@PipelineBehavior(order = 5)
+fun verify(arg: Request, next: suspend (Request) -> Unit) {
+
+}
+
 @PipelineBehavior
-fun verify(arg: Request, next: (Request) -> Unit) {
+fun verify2(arg: Request?, next: suspend (Request?) -> Unit) {
 
 }

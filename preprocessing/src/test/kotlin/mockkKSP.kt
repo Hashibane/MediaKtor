@@ -1,4 +1,5 @@
 import com.google.devtools.ksp.symbol.ClassKind
+import com.google.devtools.ksp.symbol.FunctionKind
 import com.google.devtools.ksp.symbol.KSAnnotation
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSDeclaration
@@ -8,6 +9,7 @@ import com.google.devtools.ksp.symbol.KSName
 import com.google.devtools.ksp.symbol.KSReferenceElement
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeArgument
+import com.google.devtools.ksp.symbol.KSTypeParameter
 import com.google.devtools.ksp.symbol.KSTypeReference
 import com.google.devtools.ksp.symbol.KSValueArgument
 import com.google.devtools.ksp.symbol.KSValueParameter
@@ -19,6 +21,7 @@ import io.mockk.mockkClass
 internal fun mockName(string: String): KSName {
     val name = mockkClass(KSName::class)
     every { name.asString() } returns string
+    every { name.getShortName() } returns (string.split(".").lastOrNull() ?: "")
     return name
 }
 
@@ -32,6 +35,14 @@ internal fun mockClassDeclaration(body: KSClassDeclaration.(KSClassDeclaration) 
     every { declaration.parentDeclaration } returns null
     every { declaration.superTypes } returns sequenceOf()
     declaration.body(declaration)
+}
+
+internal fun mockFunctionDeclaration(body: KSFunctionDeclaration.(KSFunctionDeclaration) -> Unit) {
+    val functionDeclaration = mockkClass(KSFunctionDeclaration::class)
+    every { functionDeclaration.parameters } returns listOf()
+    every { functionDeclaration.annotations } returns sequenceOf()
+    every { functionDeclaration.typeParameters } returns listOf()
+    functionDeclaration.body(functionDeclaration)
 }
 
 internal fun mockTypeArgument(body: KSTypeArgument.(KSTypeArgument) -> Unit) {
@@ -108,11 +119,20 @@ fun KSType.classDeclaration(body: KSClassDeclaration.() -> Unit) =
         every { this@classDeclaration.declaration } returns this
     }
 
+fun KSType.functionDeclaration(body: KSFunctionDeclaration.() -> Unit) =
+    mockFunctionDeclaration {
+        body()
+        every { this@functionDeclaration.declaration } returns this
+    }
+
+
 fun KSType.nullability(body: () -> Nullability) {
     val nullabilityValue = body()
     every { nullability } returns nullabilityValue
     every { isMarkedNullable } returns (nullabilityValue != Nullability.NOT_NULL)
 }
+
+fun KSType.isSuspendFunctionType(body: () -> Boolean) = every { isSuspendFunctionType } returns body()
 
 fun KSType.argument(body: KSTypeArgument.() -> Unit) = mockTypeArgument {
     val typeArg = mockkClass(KSTypeArgument::class)
@@ -175,12 +195,39 @@ fun KSFunctionDeclaration.parameter(body: KSValueParameter.() -> Unit) {
     every { parameters } returns newParams
 }
 
+fun KSFunctionDeclaration.typeParameter(body: KSTypeParameter.() -> Unit) {
+    val typeParam = mockkClass(KSTypeParameter::class)
+    every { typeParam.bounds } returns sequenceOf()
+    every { typeParam.variance } returns Variance.INVARIANT
+    typeParam.body()
+
+    val newParams = typeParameters.toMutableList()
+    newParams.add(typeParam)
+
+    every { typeParameters } returns newParams
+}
+
+fun KSTypeParameter.bound(body: KSTypeReference.() -> Unit) = mockTypeReference {
+    val typeRef = mockkClass(KSTypeReference::class)
+    every { typeRef.element } returns null
+    typeRef.body()
+
+    val newArgs = bounds.toMutableList()
+    newArgs.add(typeRef)
+
+    every { bounds } returns newArgs.asSequence()
+}
+
+fun KSTypeParameter.name(body: () -> String) = every { name } returns mockName(body())
+
 fun KSValueParameter.name(body: () -> String) = every { name } returns mockName(body())
 
 fun KSFunctionDeclaration.returnType(body: KSTypeReference.() -> Unit) = mockTypeReference {
     body()
     every { this@returnType.returnType } returns this
 }
+
+fun KSFunctionDeclaration.functionKind(body: () -> FunctionKind) = every { functionKind } returns body()
 
 fun KSFunctionDeclaration.simpleName(body: () -> String) = every { simpleName } returns mockName(body())
 

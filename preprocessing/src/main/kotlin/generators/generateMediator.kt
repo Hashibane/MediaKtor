@@ -41,8 +41,6 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
         }
     }
 
-    // TODO : write a comparator for two types so that it checks if one is child of another
-
     mediatorBuilder.primaryConstructor(constructorBuilder.build())
 
     val parameterName = "command"
@@ -62,39 +60,39 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
 
     val sortedRegistry = handlerRegistry.toSortedMap(typeSorter)
 
-    val currentPipelines = mutableListOf<PipelineHandler>()
-    var previousType: TypeName? = null
-
     val coroutineScope = MemberName("kotlinx.coroutines", "coroutineScope")
     val launch = MemberName("kotlinx.coroutines", "launch")
 
-    sortedRegistry.forEach { typeEntry ->
-        // if current is not a subtype of next, we must clear the pipelines, since we deal with unrelated types
-        if (typeSorter.compare(typeEntry.key, previousType) <= 0)
-            currentPipelines.clear()
+    val pipelineCache: MutableMap<TypeName, MutableList<PipelineHandler>> = mutableMapOf()
 
-        typeEntry.value.filterIsInstance<PipelineHandler>().forEach {
-            currentPipelines.add(it)
-        }
+    // TODO : can reduce from Theta(n^2)? We refilter PipelineHandlers each iteration
+    // Don't think it's a problem for now, since n is small
+    sortedRegistry.forEach { (type, handlers) ->
+        val pipelines = handlers.filterIsInstance<PipelineHandler>().toMutableList()
 
-        currentPipelines.sortBy { it.pipelineMetadata.order }
+        sortedRegistry
+            .filter { (candidateType, _) -> typeSorter.compare(candidateType, type) > 0 }
+            .forEach { (_, actualHandlers) ->
+                pipelines.addAll(actualHandlers.filterIsInstance<PipelineHandler>())
+            }
+        pipelineCache[type] = pipelines.sortedBy { it.pipelineMetadata.order }.toMutableList()
+    }
 
-        previousType = typeEntry.key
-
-        val requestHandlers = typeEntry.value.filterIsInstance<RequestHandler>()
+    sortedRegistry.forEach { (type, handlers) ->
+        val requestHandlers = handlers.filterIsInstance<RequestHandler>()
         if (requestHandlers.isNotEmpty())
-            invokeBuilder.beginControlFlow("is %T ->", typeEntry.key)
+            invokeBuilder.beginControlFlow("is %T ->", type)
 
-        val notificationHandlers = typeEntry.value.filterIsInstance<NotificationHandler>()
+        val notificationHandlers = handlers.filterIsInstance<NotificationHandler>()
         if (notificationHandlers.isNotEmpty()) {
-            publishBuilder.beginControlFlow("is %T ->", typeEntry.key)
+            publishBuilder.beginControlFlow("is %T ->", type)
             publishBuilder.beginControlFlow("%M", coroutineScope)
         }
 
         var unskipped = 0
 
         requestHandlers.forEach {
-            for (handler in currentPipelines) {
+            for (handler in pipelineCache[type]!!) {
                 val handlerReturn = it.handlerMetadata.returnType
                 val pipelineReturn = handler.handlerMetadata.returnType
 
@@ -126,7 +124,7 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
         unskipped = 0
 
         if (notificationHandlers.isNotEmpty()) {
-            for (handler in currentPipelines) {
+            for (handler in pipelineCache[type]!!) {
                 if (handler.handlerMetadata.returnType != UNIT)
                     continue
 

@@ -3,6 +3,7 @@ package processors
 import annotations.HandlerLifespan
 import annotations.NotificationParallel
 import annotations.PipelineBehavior
+import annotations.PipelineTarget
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -126,7 +127,7 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
             "HandlerLifespan.FACTORY" -> HandlerLifespan.FACTORY
             else -> throw PreprocessingException(
                 "Unknown lifecycle specifier $lifecycle on" +
-                        " function $functionName. Expected single or factory"
+                        " handler function $functionName. Expected SINGLE or FACTORY"
             )
         }
     )
@@ -142,8 +143,8 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
                     "NotificationParallel.SEQUENTIAL" -> NotificationParallel.SEQUENTIAL
                     "NotificationParallel.PARALLEL" -> NotificationParallel.PARALLEL
                     else -> throw PreprocessingException(
-                        "Unknown lifecycle specifier $parallel on" +
-                                " function $functionName. Expected sequential or parallel"
+                        "Unknown parallel specifier $parallel on" +
+                                " notification function $functionName. Expected SEQUENTIAL or PARALLEL"
                     )
                 },
                 order.toInt()
@@ -152,6 +153,7 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
         }
         HandlerDescriptor.PIPELINE_HANDLER -> {
             val order = functionAnnotationArgs?.find { it.name?.asString() == "order" }?.value.toString()
+            val target = functionAnnotationArgs?.find { it.name?.asString() == "target" }?.value.toString()
             val nextTypeCandidate = function.parameters.find { it.name?.asString() == "next" }?.type
 
             if (nextTypeCandidate == null)
@@ -183,7 +185,16 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
                     throw PreprocessingException("There was an error during resolution of return type $returnType for " +
                             "handler $functionName of \"next\" argument")
 
-                val pipelineMetadata = PipelineMetadata(returnType.toTypeVariableName(), order.toInt())
+                val pipelineMetadata = PipelineMetadata(returnType.toTypeVariableName(),
+                    order.toInt(),
+                    when (target) {
+                    "PipelineTarget.REQUESTS" -> PipelineTarget.REQUESTS
+                    "PipelineTarget.NOTIFICATIONS" -> PipelineTarget.NOTIFICATIONS
+                        "PipelineTarget.BOTH" -> PipelineTarget.BOTH
+                    else -> throw PreprocessingException(
+                        "Unknown target specifier $target on" +
+                                " pipeline function $functionName. Expected REQUESTS, NOTIFICATIONS or BOTH.")
+                    })
                 handlerRegistry.extend(resolvedRequestArg.toTypeName(), PipelineHandler(handlerMetadata, pipelineMetadata))
             } else {
                 throw PreprocessingException("Pipeline handler $functionName argument next should be of type:" +

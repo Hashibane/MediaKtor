@@ -1,6 +1,7 @@
 package generationTests
 
 import annotations.NotificationParallel
+import annotations.PipelineTarget
 import argument
 import classDeclaration
 import classKind
@@ -564,7 +565,7 @@ class MediatorTests {
 
         val pipelineOneName = "pipelineOne"
         val pipelineOne = functionDeclaration {
-            setupHandler(pipelineOneName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 0))
+            setupHandler(pipelineOneName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.REQUESTS))
 
             parameter {
                 name { "request" }
@@ -627,7 +628,7 @@ class MediatorTests {
 
         val pipelineTwoName = "pipelineTwo"
         val pipelineTwo = functionDeclaration {
-            setupHandler(pipelineTwoName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 2))
+            setupHandler(pipelineTwoName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.REQUESTS))
 
             parameter {
                 name { "request" }
@@ -690,7 +691,7 @@ class MediatorTests {
 
         val pipelineThreeName = "pipelineThree"
         val pipelineThree = functionDeclaration {
-            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1))
+            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1, PipelineTarget.REQUESTS))
 
             parameter {
                 name { "request" }
@@ -753,7 +754,7 @@ class MediatorTests {
 
         val pipelineFourName = "pipelineFour"
         val pipelineFour = functionDeclaration {
-            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class), Int.MIN_VALUE))
+            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class), Int.MIN_VALUE, PipelineTarget.REQUESTS))
 
             parameter {
                 name { "request" }
@@ -919,10 +920,11 @@ class MediatorTests {
        nf1 -> NotificationHandler(paramPackage.InputType1?)
        nf2 -> NotificationHandler(paramPackage.InputType2?)
 
-       pl4 -> PipelineBehavior(paramPackage.InputType2?): InputType2
-       pl3 -> PipelineBehaviour(paramPackage.InputType2?): Unit
-       pl2 -> PipelineBehavior(paramPackage.InputType1?): Unit
-       pl1 -> PipelineBehavior(paramPackage.InputType1): InputType2
+       pl5 -> PipelineBehavior(paramPackage.InputType1?): Unit (NOTIFICATIONS)
+       pl4 -> PipelineBehavior(paramPackage.InputType2?): InputType2 (REQUESTS)
+       pl3 -> PipelineBehaviour(paramPackage.InputType2?): Unit (BOTH)
+       pl2 -> PipelineBehavior(paramPackage.InputType1?): Unit (REQUESTS)
+       pl1 -> PipelineBehavior(paramPackage.InputType1): InputType2 (REQUESTS)
 
        [InputType1 <: InputType2, InputType1 <: InputType1?, InputType2 <: InputType2?, InputType1? <: InputType2?]
     output:
@@ -932,7 +934,7 @@ class MediatorTests {
            is InputType2 -> pl4 rq3
            is InputType2? -> pl4 rq4
        publish()
-           is InputType1? -> pl2 pl3 nf1 nf2
+           is InputType1? -> pl3 pl5 nf1
            is InputType2? -> pl3 nf2
     */
     @Test
@@ -1096,7 +1098,8 @@ class MediatorTests {
 
         val pipelineOneName = "pipelineOne"
         val pipelineOne = functionDeclaration {
-            setupHandler(pipelineOneName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 0))
+            setupHandler(pipelineOneName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.REQUESTS))
 
             parameter {
                 name { "request" }
@@ -1159,7 +1162,8 @@ class MediatorTests {
 
         val pipelineTwoName = "pipelineTwo"
         val pipelineTwo = functionDeclaration {
-            setupHandler(pipelineTwoName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 2))
+            setupHandler(pipelineTwoName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.REQUESTS))
 
             parameter {
                 name { "request" }
@@ -1222,7 +1226,9 @@ class MediatorTests {
 
         val pipelineThreeName = "pipelineThree"
         val pipelineThree = functionDeclaration {
-            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1))
+            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1,
+                PipelineTarget.BOTH
+            ))
 
             parameter {
                 name { "request" }
@@ -1285,7 +1291,8 @@ class MediatorTests {
 
         val pipelineFourName = "pipelineFour"
         val pipelineFour = functionDeclaration {
-            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class), Int.MIN_VALUE))
+            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class),
+                Int.MIN_VALUE, PipelineTarget.REQUESTS))
 
             parameter {
                 name { "request" }
@@ -1346,6 +1353,70 @@ class MediatorTests {
             }
         }
 
+        val pipelineFiveName = "pipelineFive"
+        val pipelineFive = functionDeclaration {
+            setupHandler(pipelineFiveName, additionalData = PipelineMetadata(mockkClass(TypeName::class),
+                Int.MIN_VALUE, PipelineTarget.NOTIFICATIONS))
+
+            parameter {
+                name { "request" }
+
+                typeRef {
+                    inputOneClass(Nullability.NULLABLE)
+                }
+            }
+
+            parameter {
+                name { "next" }
+
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        isSuspendFunctionType { true }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                inputOneClass(Nullability.NULLABLE)
+                            }
+                        }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                unitReturnType()
+                            }
+                        }
+
+                        functionDeclaration {
+                            typeParameter {}
+
+                            typeParameter {
+                                name { "$returnPackage.$returnType" }
+                            }
+
+                            parameter {
+                                typeRef {
+                                    inputOneClass(Nullability.NULLABLE)
+                                }
+                            }
+
+                            returnType {
+                                unitReturnType()
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
         val generatedCode = generateStringOutput(1) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
@@ -1364,6 +1435,8 @@ class MediatorTests {
             PipelineHandlerVisitor().visitFunctionDeclaration(pipelineTwo, Unit)
             PipelineHandlerVisitor().visitFunctionDeclaration(pipelineThree, Unit)
             PipelineHandlerVisitor().visitFunctionDeclaration(pipelineFour, Unit)
+            PipelineHandlerVisitor().visitFunctionDeclaration(pipelineFive, Unit)
+
             process(resolver)
         }
 

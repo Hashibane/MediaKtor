@@ -108,6 +108,26 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String,
 
         if (additionalData is PipelineMetadata) {
             argument {
+                name { "target" }
+
+                value {
+                    classDeclaration {
+                        packageName { "annotations" }
+                        qualifiedName { "annotations.PipelineTarget.${additionalData.target}" }
+                        classKind { ClassKind.ENUM_ENTRY }
+
+                        every { this@classDeclaration.toString() } returns "PipelineTarget.${additionalData.target}"
+                        parentClassDeclaration {
+                            packageName { "annotations" }
+                            qualifiedName { "annotations.PipelineTarget" }
+                            classKind { ClassKind.ENUM_CLASS }
+                        }
+                    }
+                }
+            }
+
+
+            argument {
                 name { "order" }
 
                 value {

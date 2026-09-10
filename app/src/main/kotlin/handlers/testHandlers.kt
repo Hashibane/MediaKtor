@@ -3,6 +3,7 @@ package handlers
 import annotations.HandlerLifespan
 import annotations.NotificationHandler
 import annotations.PipelineBehavior
+import annotations.PipelineTarget
 import annotations.RequestHandler
 import kotlinx.coroutines.coroutineScope
 
@@ -26,12 +27,12 @@ fun testNotifierTwo(arg: Request?) {
 }
 
  
-@PipelineBehavior(order = 5)
+@PipelineBehavior(order = 5, target = PipelineTarget.NOTIFICATIONS)
 fun verify(arg: Request, next: suspend (Request) -> Unit) {
 
 }
 
-@PipelineBehavior
+@PipelineBehavior(target = PipelineTarget.BOTH)
 fun verify2(arg: Request?, next: suspend (Request?) -> Unit) {
 
 }

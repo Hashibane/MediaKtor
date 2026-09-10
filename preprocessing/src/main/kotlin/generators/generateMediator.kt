@@ -1,6 +1,7 @@
 package generators
 
 import annotations.NotificationParallel
+import annotations.PipelineTarget
 import com.squareup.kotlinpoet.*
 import errors.PreprocessingException
 import metadata.HandlerType
@@ -91,28 +92,29 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
 
         var unskipped = 0
 
-        requestHandlers.forEach {
-            for (handler in pipelineCache[type]!!) {
-                val handlerReturn = it.handlerMetadata.returnType
+        requestHandlers.forEach { requestHandler ->
+            for (handler in pipelineCache[type]!!.filter {
+                it.pipelineMetadata.target == PipelineTarget.REQUESTS ||
+                        (it.pipelineMetadata.target == PipelineTarget.BOTH && requestHandler.handlerMetadata.returnType == UNIT)
+            }) {
+                val handlerReturn = requestHandler.handlerMetadata.returnType
                 val pipelineReturn = handler.handlerMetadata.returnType
 
-                // UNIT is valid for notification handlers.
-                if (pipelineReturn != handlerReturn && pipelineReturn != UNIT && handlerReturn != UNIT) {
+                // TODO : warning instead. We don't want to make whole program incorrect, just because a new handler is added with different return type
+                if (pipelineReturn != handlerReturn) {
                     throw PreprocessingException("All pipelines must return type of the corresponding request handler: " +
-                            "${it.handlerMetadata.generatedClass.simpleName}. " +
-                            "Expected type: $handlerReturn, current type: $pipelineReturn")
+                            "${requestHandler.handlerMetadata.generatedClass.simpleName}. " +
+                            "Expected type: $handlerReturn, current type: $pipelineReturn " +
+                            "on handler ${handler.handlerMetadata.generatedClass.simpleName}")
                 }
 
-                // if not, then handlerReturn is UNIT and we should skip it
-                if (pipelineReturn == handlerReturn) {
-                    val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
-                    invokeBuilder.beginControlFlow("%L().handleRequest(%L)", propName, parameterName)
+                val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
+                invokeBuilder.beginControlFlow("%L().handleRequest(%L)", propName, parameterName)
 
-                    unskipped += 1
-                }
+                unskipped += 1
             }
 
-            val propName = it.handlerMetadata.generatedClass.simpleName.lowercase()
+            val propName = requestHandler.handlerMetadata.generatedClass.simpleName.lowercase()
             invokeBuilder.addStatement("%L().handleRequest(%L)", propName, parameterName)
 
             // + 1 for "is %T"
@@ -124,9 +126,13 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
         unskipped = 0
 
         if (notificationHandlers.isNotEmpty()) {
-            for (handler in pipelineCache[type]!!) {
+            for (handler in pipelineCache[type]!!.filter {
+                it.pipelineMetadata.target == PipelineTarget.NOTIFICATIONS || it.pipelineMetadata.target == PipelineTarget.BOTH
+            }) {
                 if (handler.handlerMetadata.returnType != UNIT)
-                    continue
+                    throw PreprocessingException("All notification/both pipelines must return Unit type. Handler: " +
+                            "${handler.handlerMetadata.generatedClass.simpleName}. " +
+                            "Expected type: Unit, current type: ${handler.handlerMetadata.returnType}")
 
                 val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
                 publishBuilder.beginControlFlow("%L().handleRequest(%L)", propName, parameterName)

@@ -24,7 +24,7 @@ fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): Lis
     val codeGenerator = mockkClass(CodeGenerator::class)
     every { codeGenerator.createNewFile(any(), any(), any()) } returnsMany outputStreams
 
-    val logger = mockkClass(KSPLogger::class)
+    val logger = MockKSPLogger
     val processor = HandlerProcessor(codeGenerator, logger)
 
     processor.body()

@@ -1,10 +1,12 @@
 package generationTests
 
+import MockKSPLogger
 import annotations.NotificationParallel
 import annotations.PipelineTarget
 import argument
 import classDeclaration
 import classKind
+import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassifierReference
@@ -16,6 +18,7 @@ import com.squareup.kotlinpoet.TypeName
 import element
 import functionDeclaration
 import generateStringOutput
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.mockk.every
 import io.mockk.mockkClass
 import isSuspendFunctionType
@@ -1061,7 +1064,7 @@ class MediatorTests {
 
         // -- notifications
 
-        val notificationOneName = "handlerOne"
+        val notificationOneName = "notificationOne"
         val notificationOne = functionDeclaration {
             setupHandler(notificationOneName,
                 additionalData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2))
@@ -1078,7 +1081,7 @@ class MediatorTests {
         }
 
 
-        val notificationTwoName = "handlerOne"
+        val notificationTwoName = "notificationTwo"
         val notificationTwo = functionDeclaration {
             setupHandler(notificationTwoName,
                 additionalData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
@@ -1454,6 +1457,7 @@ class MediatorTests {
         assert(mediatorCode.contains(": suspend () -> Handler__${pipelineTwoName}__8"))
         assert(mediatorCode.contains(": suspend () -> Handler__${pipelineThreeName}__9"))
         assert(mediatorCode.contains(": suspend () -> Handler__${pipelineFourName}__10"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineFiveName}__11"))
         assert(mediatorCode.contains("is $inputOneType ->"))
         assert(mediatorCode.contains("is $inputOneType? ->"))
         assert(mediatorCode.contains("is $inputTwoType ->"))
@@ -1522,8 +1526,8 @@ class MediatorTests {
             mediatorCode.contains(
                 """is InputType1? -> {
         coroutineScope {
-          handler__${pipelineThreeName.lowercase()}__9().handleRequest(command) {
-            handler__${pipelineTwoName.lowercase()}__8().handleRequest(command) {
+          handler__${pipelineFiveName.lowercase()}__11().handleRequest(command) {
+            handler__${pipelineThreeName.lowercase()}__9().handleRequest(command) {
               launch {
                 handler__${notificationOneName.lowercase()}__5().handleRequest(command)
               }
@@ -1539,7 +1543,7 @@ class MediatorTests {
                 """is InputType2? -> {
         coroutineScope {
           handler__${pipelineThreeName.lowercase()}__9().handleRequest(command) {
-            handler__${notificationOneName.lowercase()}__6().handleRequest(command)
+            handler__${notificationTwoName.lowercase()}__6().handleRequest(command)
           }
         }
       }""".trimMargin()

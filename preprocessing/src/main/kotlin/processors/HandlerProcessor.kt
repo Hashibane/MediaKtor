@@ -61,7 +61,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         }
 
         val allHandlers = handlerMetadata.flatMap { it.value }
-        val mediatorMetadata = generateMediator(handlerMetadata, TypeSorter())
+        val mediatorMetadata = generateMediator(handlerMetadata, TypeSorter(), logger)
         val dependencies = handlerDependencies(allHandlers)
         mediatorMetadata?.fileSpec?.writeTo(codeGenerator, dependencies)
 

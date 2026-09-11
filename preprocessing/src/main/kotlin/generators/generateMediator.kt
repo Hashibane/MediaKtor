@@ -2,6 +2,7 @@ package generators
 
 import annotations.NotificationParallel
 import annotations.PipelineTarget
+import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.*
 import errors.PreprocessingException
 import metadata.HandlerType
@@ -11,10 +12,10 @@ import metadata.RequestHandler
 import kotlin.collections.forEach
 
 data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
-data class NotificationGenerationData(val name: String, val order: Int, val isParallel: Boolean)
 
 fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
-                     typeSorter: Comparator<TypeName>): MediatorMetadata? {
+                     typeSorter: Comparator<TypeName>, logger: KSPLogger
+): MediatorMetadata? {
     if (handlerRegistry.isEmpty()) return null
 
     val superInterface = ClassName("interfaces", "Mediator")
@@ -100,18 +101,18 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
                 val handlerReturn = requestHandler.handlerMetadata.returnType
                 val pipelineReturn = handler.handlerMetadata.returnType
 
-                // TODO : warning instead. We don't want to make whole program incorrect, just because a new handler is added with different return type
+                // We don't want incorrect program after adding a handler to responds to some child type and returns some
+                // arbitrary type, which would not be the same as handler with parent type.
                 if (pipelineReturn != handlerReturn) {
-                    throw PreprocessingException("All pipelines must return type of the corresponding request handler: " +
-                            "${requestHandler.handlerMetadata.generatedClass.simpleName}. " +
-                            "Expected type: $handlerReturn, current type: $pipelineReturn " +
-                            "on handler ${handler.handlerMetadata.generatedClass.simpleName}")
+                    logger.info("Pipeline ${handler.handlerMetadata.generatedClass.simpleName} was not applied to " +
+                            "handler ${requestHandler.handlerMetadata.generatedClass.simpleName} because the return types do not match." +
+                            "Pipeline return type: $pipelineReturn. Handler type: $handlerReturn")
+                } else {
+                    val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
+                    invokeBuilder.beginControlFlow("%L().handleRequest(%L)", propName, parameterName)
+
+                    unskipped += 1
                 }
-
-                val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
-                invokeBuilder.beginControlFlow("%L().handleRequest(%L)", propName, parameterName)
-
-                unskipped += 1
             }
 
             val propName = requestHandler.handlerMetadata.generatedClass.simpleName.lowercase()

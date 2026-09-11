@@ -12,7 +12,7 @@ repositories {
 dependencies {
     testImplementation(kotlin("test"))
     testImplementation("io.mockk:mockk-jvm:1.14.11")
-    testImplementation(files("D:\\log4j\\slf4j-log4j13-1.0.1.jar"))
+    testImplementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
 
     implementation(project(":core"))
     implementation("com.google.devtools.ksp:symbol-processing-api:2.3.6")

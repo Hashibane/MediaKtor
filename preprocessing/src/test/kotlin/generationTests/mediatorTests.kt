@@ -202,8 +202,10 @@ class MediatorTests {
         val handlerOneName = "testHandler1"
 
         val handlerOne = functionDeclaration {
-            setupHandlerReturn(handlerOneName,
-                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
+            setupHandlerReturn(
+                handlerOneName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
+            )
 
             parameter {
                 typeRef {
@@ -225,8 +227,10 @@ class MediatorTests {
         val handlerTwoName = "testHandler2"
 
         val handlerTwo = functionDeclaration {
-            setupHandlerReturn(handlerTwoName,
-                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
+            setupHandlerReturn(
+                handlerTwoName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
+            )
 
             parameter {
                 typeRef {
@@ -262,10 +266,13 @@ class MediatorTests {
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
         assert(mediatorCode.contains("is $inputOneClass ->"))
-        assert(mediatorCode.contains(
-            """handler__${handlerOneName.lowercase()}__1().handleRequest(command)
+        assert(
+            mediatorCode.contains(
+                """handler__${handlerOneName.lowercase()}__1().handleRequest(command)
             |          handler__${handlerTwoName.lowercase()}__2().handleRequest(command)
-        """.trimMargin()))
+        """.trimMargin()
+            )
+        )
     }
 
     @Test
@@ -274,8 +281,10 @@ class MediatorTests {
         val handlerOneName = "testHandler1"
 
         val handlerOne = functionDeclaration {
-            setupHandlerReturn(handlerOneName,
-                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
+            setupHandlerReturn(
+                handlerOneName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
+            )
 
             parameter {
                 typeRef {
@@ -298,8 +307,10 @@ class MediatorTests {
         val inputTwoClass = "TestInputClass2"
 
         val handlerTwo = functionDeclaration {
-            setupHandlerReturn(handlerTwoName,
-                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
+            setupHandlerReturn(
+                handlerTwoName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
+            )
 
             parameter {
                 typeRef {
@@ -338,10 +349,13 @@ class MediatorTests {
         assert(mediatorCode.contains("is $inputTwoClass ->"))
         assert(mediatorCode.contains("handler__${handlerOneName.lowercase()}__1().handleRequest(command)"))
         assert(mediatorCode.contains("handler__${handlerTwoName.lowercase()}__2().handleRequest(command)"))
-        assert(!mediatorCode.contains(
-            """handler__${handlerOneName.lowercase()}__1().handleRequest(command)
+        assert(
+            !mediatorCode.contains(
+                """handler__${handlerOneName.lowercase()}__1().handleRequest(command)
             |          handler__${handlerTwoName.lowercase()}__2().handleRequest(command)
-        """.trimMargin()))
+        """.trimMargin()
+            )
+        )
     }
 
     @Test
@@ -350,8 +364,10 @@ class MediatorTests {
         val handlerOneName = "testHandler1"
 
         val handlerOne = functionDeclaration {
-            setupHandlerReturn(handlerOneName,
-                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2))
+            setupHandlerReturn(
+                handlerOneName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2)
+            )
 
             parameter {
                 typeRef {
@@ -374,8 +390,10 @@ class MediatorTests {
         val inputTwoClass = "TestInputClass2"
 
         val handlerTwo = functionDeclaration {
-            setupHandlerReturn(handlerTwoName,
-                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 1))
+            setupHandlerReturn(
+                handlerTwoName,
+                notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 1)
+            )
 
             parameter {
                 typeRef {
@@ -413,19 +431,28 @@ class MediatorTests {
         assert(mediatorCode.contains("is $inputOneClass ->"))
         assert(mediatorCode.contains("is $inputTwoClass ->"))
 
-        assert(mediatorCode.indexOf(
-            "${handlerOneName.lowercase()}__1()") > mediatorCode.indexOf("${handlerTwoName.lowercase()}__1()"))
+        assert(
+            mediatorCode.indexOf(
+                "${handlerOneName.lowercase()}__1()"
+            ) > mediatorCode.indexOf("${handlerTwoName.lowercase()}__1()")
+        )
 
-        assert(mediatorCode.contains(
-            """launch {
+        assert(
+            mediatorCode.contains(
+                """launch {
                 |            handler__${handlerOneName.lowercase()}__1().handleRequest(command)
                 |          }
-        """.trimMargin()))
-        assert(mediatorCode.contains(
-            """launch {
+        """.trimMargin()
+            )
+        )
+        assert(
+            mediatorCode.contains(
+                """launch {
                 |            handler__${handlerTwoName.lowercase()}__2().handleRequest(command)
                 |          }
-        """.trimMargin()))
+        """.trimMargin()
+            )
+        )
     }
 
     /*
@@ -483,7 +510,6 @@ class MediatorTests {
                 }
             }
         }
-
 
 
         // -- handlers
@@ -564,7 +590,10 @@ class MediatorTests {
 
         val pipelineOneName = "pipelineOne"
         val pipelineOne = functionDeclaration {
-            setupHandler(pipelineOneName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.STRICT_REQUESTS))
+            setupHandler(
+                pipelineOneName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.STRICT_REQUESTS)
+            )
 
             parameter {
                 name { "request" }
@@ -627,7 +656,10 @@ class MediatorTests {
 
         val pipelineTwoName = "pipelineTwo"
         val pipelineTwo = functionDeclaration {
-            setupHandler(pipelineTwoName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.STRICT_REQUESTS))
+            setupHandler(
+                pipelineTwoName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.STRICT_REQUESTS)
+            )
 
             parameter {
                 name { "request" }
@@ -690,7 +722,10 @@ class MediatorTests {
 
         val pipelineThreeName = "pipelineThree"
         val pipelineThree = functionDeclaration {
-            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1, PipelineTarget.STRICT_REQUESTS))
+            setupHandler(
+                pipelineThreeName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 1, PipelineTarget.STRICT_REQUESTS)
+            )
 
             parameter {
                 name { "request" }
@@ -753,7 +788,14 @@ class MediatorTests {
 
         val pipelineFourName = "pipelineFour"
         val pipelineFour = functionDeclaration {
-            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class), Int.MIN_VALUE, PipelineTarget.STRICT_REQUESTS))
+            setupHandler(
+                pipelineFourName,
+                additionalData = PipelineMetadata(
+                    mockkClass(TypeName::class),
+                    Int.MIN_VALUE,
+                    PipelineTarget.STRICT_REQUESTS
+                )
+            )
 
             parameter {
                 name { "request" }
@@ -894,18 +936,33 @@ class MediatorTests {
             )
         )
 
-        assert(mediatorCode.indexOf(
-            "is $inputOneType ->") < mediatorCode.indexOf("is $inputTwoType ->"))
-        assert(mediatorCode.indexOf(
-            "is $inputOneType ->") < mediatorCode.indexOf("is $inputOneType? ->"))
-        assert(mediatorCode.indexOf(
-            "is $inputOneType ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+        assert(
+            mediatorCode.indexOf(
+                "is $inputOneType ->"
+            ) < mediatorCode.indexOf("is $inputTwoType ->")
+        )
+        assert(
+            mediatorCode.indexOf(
+                "is $inputOneType ->"
+            ) < mediatorCode.indexOf("is $inputOneType? ->")
+        )
+        assert(
+            mediatorCode.indexOf(
+                "is $inputOneType ->"
+            ) < mediatorCode.indexOf("is $inputTwoType? ->")
+        )
 
-        assert(mediatorCode.indexOf(
-            "is $inputOneType? ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+        assert(
+            mediatorCode.indexOf(
+                "is $inputOneType? ->"
+            ) < mediatorCode.indexOf("is $inputTwoType? ->")
+        )
 
-        assert(mediatorCode.indexOf(
-            "is $inputTwoType ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+        assert(
+            mediatorCode.indexOf(
+                "is $inputTwoType ->"
+            ) < mediatorCode.indexOf("is $inputTwoType? ->")
+        )
     }
 
     /*
@@ -970,7 +1027,6 @@ class MediatorTests {
                 }
             }
         }
-
 
 
         // -- handlers
@@ -1062,8 +1118,10 @@ class MediatorTests {
 
         val notificationOneName = "notificationOne"
         val notificationOne = functionDeclaration {
-            setupHandler(notificationOneName,
-                additionalData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2))
+            setupHandler(
+                notificationOneName,
+                additionalData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2)
+            )
 
             parameter {
                 typeRef {
@@ -1079,8 +1137,10 @@ class MediatorTests {
 
         val notificationTwoName = "notificationTwo"
         val notificationTwo = functionDeclaration {
-            setupHandler(notificationTwoName,
-                additionalData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1))
+            setupHandler(
+                notificationTwoName,
+                additionalData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
+            )
 
             parameter {
                 typeRef {
@@ -1097,8 +1157,10 @@ class MediatorTests {
 
         val pipelineOneName = "pipelineOne"
         val pipelineOne = functionDeclaration {
-            setupHandler(pipelineOneName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.STRICT_REQUESTS))
+            setupHandler(
+                pipelineOneName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.STRICT_REQUESTS)
+            )
 
             parameter {
                 name { "request" }
@@ -1161,8 +1223,10 @@ class MediatorTests {
 
         val pipelineTwoName = "pipelineTwo"
         val pipelineTwo = functionDeclaration {
-            setupHandler(pipelineTwoName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.STRICT_REQUESTS))
+            setupHandler(
+                pipelineTwoName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.STRICT_REQUESTS)
+            )
 
             parameter {
                 name { "request" }
@@ -1225,9 +1289,12 @@ class MediatorTests {
 
         val pipelineThreeName = "pipelineThree"
         val pipelineThree = functionDeclaration {
-            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1,
-                PipelineTarget.STRICT_BOTH
-            ))
+            setupHandler(
+                pipelineThreeName, additionalData = PipelineMetadata(
+                    mockkClass(TypeName::class), 1,
+                    PipelineTarget.STRICT_BOTH
+                )
+            )
 
             parameter {
                 name { "request" }
@@ -1290,8 +1357,12 @@ class MediatorTests {
 
         val pipelineFourName = "pipelineFour"
         val pipelineFour = functionDeclaration {
-            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class),
-                Int.MIN_VALUE, PipelineTarget.STRICT_REQUESTS))
+            setupHandler(
+                pipelineFourName, additionalData = PipelineMetadata(
+                    mockkClass(TypeName::class),
+                    Int.MIN_VALUE, PipelineTarget.STRICT_REQUESTS
+                )
+            )
 
             parameter {
                 name { "request" }
@@ -1354,8 +1425,12 @@ class MediatorTests {
 
         val pipelineFiveName = "pipelineFive"
         val pipelineFive = functionDeclaration {
-            setupHandler(pipelineFiveName, additionalData = PipelineMetadata(mockkClass(TypeName::class),
-                Int.MIN_VALUE, PipelineTarget.STRICT_NOTIFICATIONS))
+            setupHandler(
+                pipelineFiveName, additionalData = PipelineMetadata(
+                    mockkClass(TypeName::class),
+                    Int.MIN_VALUE, PipelineTarget.STRICT_NOTIFICATIONS
+                )
+            )
 
             parameter {
                 name { "request" }
@@ -1440,7 +1515,6 @@ class MediatorTests {
         }
 
         val mediatorCode = generatedCode.drop(2).first()
-        println(mediatorCode)
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend operator fun <T : Any> invoke"))
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
@@ -1505,18 +1579,33 @@ class MediatorTests {
             )
         )
 
-        assert(mediatorCode.indexOf(
-            "is $inputOneType ->") < mediatorCode.indexOf("is $inputTwoType ->"))
-        assert(mediatorCode.indexOf(
-            "is $inputOneType ->") < mediatorCode.indexOf("is $inputOneType? ->"))
-        assert(mediatorCode.indexOf(
-            "is $inputOneType ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+        assert(
+            mediatorCode.indexOf(
+                "is $inputOneType ->"
+            ) < mediatorCode.indexOf("is $inputTwoType ->")
+        )
+        assert(
+            mediatorCode.indexOf(
+                "is $inputOneType ->"
+            ) < mediatorCode.indexOf("is $inputOneType? ->")
+        )
+        assert(
+            mediatorCode.indexOf(
+                "is $inputOneType ->"
+            ) < mediatorCode.indexOf("is $inputTwoType? ->")
+        )
 
-        assert(mediatorCode.indexOf(
-            "is $inputOneType? ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+        assert(
+            mediatorCode.indexOf(
+                "is $inputOneType? ->"
+            ) < mediatorCode.indexOf("is $inputTwoType? ->")
+        )
 
-        assert(mediatorCode.indexOf(
-            "is $inputTwoType ->") < mediatorCode.indexOf("is $inputTwoType? ->"))
+        assert(
+            mediatorCode.indexOf(
+                "is $inputTwoType ->"
+            ) < mediatorCode.indexOf("is $inputTwoType? ->")
+        )
 
         assert(
             mediatorCode.contains(
@@ -1540,6 +1629,451 @@ class MediatorTests {
         coroutineScope {
           handler__${pipelineThreeName.lowercase()}__9().handleRequest(command) {
             handler__${notificationTwoName.lowercase()}__6().handleRequest(command)
+          }
+        }
+      }""".trimMargin()
+            )
+        )
+    }
+
+
+    /*
+    input:
+       rq1 -> RequestHandler(paramPackage.InputType1) : ReturnType
+       rq2 -> RequestHandler(paramPackage.InputType1?) : Unit
+
+       nf1 -> NotificationHandler(paramPackage.InputType1)
+       nf2 -> NotificationHandler(paramPackage.InputType1?)
+
+       pl3 -> PipelineBehavior(paramPackage.InputType1?): Any? (PASS_REQUESTS)
+       pl2 -> PipelineBehaviour(paramPackage.InputType1?): Unit (STRICT_BOTH)
+       pl1 -> PipelineBehavior(paramPackage.InputType1): Any? (PASS_BOTH)
+
+    output:
+       invoke()
+           is InputType1 -> pl1 pl3 rq1
+           is InputType1? -> pl2 pl3 rq2
+
+       publish()
+           is InputType1 -> pl1 pl2 nf1 nf2
+           is InputType1? -> pl2 nf2
+    */
+    @Test
+    fun `multiple pipeline behaviors with strict and pass targets and simple type hierarchy`() {
+        val inputPackage = "paramPackage"
+        val inputOneType = "InputType1"
+
+        val returnPackage = "returnPackage"
+        val returnType = "ReturnType"
+
+
+        val inputOneClass: KSTypeReference.(Nullability) -> Unit = { nullability ->
+            type {
+                nullability { nullability }
+                classDeclaration {
+                    packageName { inputPackage }
+                    qualifiedName { "$inputPackage.$inputOneType" }
+                    classKind { ClassKind.CLASS }
+                }
+            }
+        }
+
+
+        // -- handlers
+
+        val returnTypePart: KSTypeReference.() -> Unit = {
+            type {
+                nullability { Nullability.NOT_NULL }
+                classDeclaration {
+                    packageName { returnPackage }
+                    qualifiedName { "$returnPackage.$returnType" }
+                    classKind { ClassKind.CLASS }
+                }
+            }
+        }
+
+        val unitReturnType: KSTypeReference.() -> Unit = {
+            type {
+                nullability { Nullability.NOT_NULL }
+                classDeclaration {
+                    packageName { "kotlin" }
+                    qualifiedName { "kotlin.Unit" }
+                    classKind { ClassKind.OBJECT }
+                }
+            }
+        }
+
+        val handlerOneName = "handlerOne"
+        val handlerOne = functionDeclaration {
+            setupHandler(handlerOneName)
+
+            parameter {
+                typeRef {
+                    inputOneClass(Nullability.NOT_NULL)
+                }
+            }
+
+            returnType {
+                returnTypePart()
+            }
+        }
+
+
+        val handlerTwoName = "handlerTwo"
+        val handlerTwo = functionDeclaration {
+            setupHandler(handlerTwoName)
+
+            parameter {
+                typeRef {
+                    inputOneClass(Nullability.NULLABLE)
+                }
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+        // -- notifications
+
+        val notificationOneName = "notificationOne"
+        val notificationOne = functionDeclaration {
+            setupHandler(
+                notificationOneName,
+                additionalData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2)
+            )
+
+            parameter {
+                typeRef {
+                    inputOneClass(Nullability.NOT_NULL)
+                }
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+
+        val notificationTwoName = "notificationTwo"
+        val notificationTwo = functionDeclaration {
+            setupHandler(
+                notificationTwoName,
+                additionalData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
+            )
+
+            parameter {
+                typeRef {
+                    inputOneClass(Nullability.NULLABLE)
+                }
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+        // -- pipelines
+
+        val anyReturnType: KSTypeReference.() -> Unit = {
+            type {
+                nullability { Nullability.NULLABLE }
+                classDeclaration {
+                    packageName { "kotlin" }
+                    qualifiedName { "kotlin.Any" }
+                    classKind { ClassKind.CLASS }
+                }
+            }
+        }
+
+        val pipelineOneName = "pipelineOne"
+        val pipelineOne = functionDeclaration {
+            setupHandler(
+                pipelineOneName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0,
+                    PipelineTarget.PASS_BOTH)
+            )
+
+            parameter {
+                name { "request" }
+
+                typeRef {
+                    inputOneClass(Nullability.NOT_NULL)
+                }
+            }
+
+            parameter {
+                name { "next" }
+
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        isSuspendFunctionType { true }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                inputOneClass(Nullability.NOT_NULL)
+                            }
+                        }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                anyReturnType()
+                            }
+                        }
+
+                        functionDeclaration {
+                            typeParameter {}
+
+                            typeParameter {
+                                name { "kotlin.Any" }
+                            }
+
+                            parameter {
+                                typeRef {
+                                    inputOneClass(Nullability.NOT_NULL)
+                                }
+                            }
+
+                            returnType {
+                                anyReturnType()
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            returnType {
+                anyReturnType()
+            }
+        }
+
+        val pipelineTwoName = "pipelineTwo"
+        val pipelineTwo = functionDeclaration {
+            setupHandler(
+                pipelineTwoName,
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2,
+                    PipelineTarget.STRICT_BOTH)
+            )
+
+            parameter {
+                name { "request" }
+
+                typeRef {
+                    inputOneClass(Nullability.NULLABLE)
+                }
+            }
+
+            parameter {
+                name { "next" }
+
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        isSuspendFunctionType { true }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                inputOneClass(Nullability.NULLABLE)
+                            }
+                        }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                unitReturnType()
+                            }
+                        }
+
+                        functionDeclaration {
+                            typeParameter {}
+
+                            typeParameter {
+                                name { "$returnPackage.$returnType" }
+                            }
+
+                            parameter {
+                                typeRef {
+                                    inputOneClass(Nullability.NULLABLE)
+                                }
+                            }
+
+                            returnType {
+                                unitReturnType()
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            returnType {
+                unitReturnType()
+            }
+        }
+
+        val pipelineThreeName = "pipelineThree"
+        val pipelineThree = functionDeclaration {
+            setupHandler(
+                pipelineThreeName, additionalData = PipelineMetadata(
+                    mockkClass(TypeName::class), 1,
+                    PipelineTarget.PASS_REQUESTS
+                )
+            )
+
+            parameter {
+                name { "request" }
+
+                typeRef {
+                    inputOneClass(Nullability.NULLABLE)
+                }
+            }
+
+            parameter {
+                name { "next" }
+
+                typeRef {
+                    type {
+                        nullability { Nullability.NOT_NULL }
+                        isSuspendFunctionType { true }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                inputOneClass(Nullability.NULLABLE)
+                            }
+                        }
+
+                        argument {
+                            variance { Variance.INVARIANT }
+
+                            typeRef {
+                                anyReturnType()
+                            }
+                        }
+
+                        functionDeclaration {
+                            typeParameter {}
+
+                            typeParameter {
+                                name { "kotlin.Any" }
+                            }
+
+                            parameter {
+                                typeRef {
+                                    inputOneClass(Nullability.NULLABLE)
+                                }
+                            }
+
+                            returnType {
+                                anyReturnType()
+                            }
+                        }
+                    }
+                }
+
+            }
+
+            returnType {
+                anyReturnType()
+            }
+        }
+
+        val generatedCode = generateStringOutput(1) {
+            val resolver = mockkClass(Resolver::class)
+            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+
+            RequestHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
+            RequestHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
+
+            NotificationHandlerVisitor().visitFunctionDeclaration(notificationOne, Unit)
+            NotificationHandlerVisitor().visitFunctionDeclaration(notificationTwo, Unit)
+
+            PipelineHandlerVisitor().visitFunctionDeclaration(pipelineOne, Unit)
+            PipelineHandlerVisitor().visitFunctionDeclaration(pipelineTwo, Unit)
+            PipelineHandlerVisitor().visitFunctionDeclaration(pipelineThree, Unit)
+
+            process(resolver)
+        }
+
+        val mediatorCode = generatedCode.drop(2).first()
+        println(mediatorCode)
+        assert(mediatorCode.contains(": Mediator"))
+        assert(mediatorCode.contains("override suspend operator fun <T : Any> invoke"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${notificationOneName}__3"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${notificationTwoName}__4"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineOneName}__5"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineTwoName}__6"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineThreeName}__7"))
+        assert(mediatorCode.contains("is $inputOneType ->"))
+        assert(mediatorCode.contains("is $inputOneType? ->"))
+
+        assert(
+            mediatorCode.contains(
+                """is InputType1 -> {
+      handler__${pipelineOneName.lowercase()}__5().handleRequest(command) {
+        handler__${pipelineThreeName.lowercase()}__7().handleRequest(command) {
+          handler__${handlerOneName.lowercase()}__1().handleRequest(command)
+        }
+      }
+    }""".trimMargin()
+            )
+        )
+
+        assert(
+            mediatorCode.contains(
+                """is InputType1? -> {
+      handler__${pipelineTwoName.lowercase()}__6().handleRequest(command) {
+        handler__${pipelineThreeName.lowercase()}__7().handleRequest(command) {
+          handler__${handlerTwoName.lowercase()}__2().handleRequest(command)
+        }
+      }
+    }""".trimMargin()
+            )
+        )
+
+        assert(
+            mediatorCode.indexOf(
+                "is -> ${inputOneType}"
+            ) < mediatorCode.indexOf("is ${inputOneType}? ->")
+        )
+
+
+        assert(
+            mediatorCode.contains(
+                """is InputType1 -> {
+        coroutineScope {
+          handler__${pipelineTwoName.lowercase()}__6().handleRequest(command) {
+            handler__${pipelineOneName.lowercase()}__5().handleRequest(command) {
+              launch {
+                handler__${notificationOneName.lowercase()}__3().handleRequest(command)
+              }
+            }
+          }
+        }
+      }""".trimMargin()
+            )
+        )
+
+        assert(
+            mediatorCode.contains(
+                """is InputType1? -> {
+        coroutineScope {
+          handler__${pipelineTwoName.lowercase()}__6().handleRequest(command) {
+            handler__${notificationTwoName.lowercase()}__4().handleRequest(command)
           }
         }
       }""".trimMargin()

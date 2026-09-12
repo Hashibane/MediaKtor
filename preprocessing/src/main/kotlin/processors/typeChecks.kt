@@ -6,13 +6,7 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.UNIT
 import errors.PreprocessingException
 
-fun verifyPipeline(functionName: String, requestType: TypeName, nextRequest: TypeName,
-                   nextReturn: TypeName, returnType: TypeName, target: PipelineTarget) {
-    if (requestType != nextRequest) {
-        throw PreprocessingException("The request type must be the same as type of \"next\" parameter." +
-                " Expected type suspend ($requestType) ->" +
-                " $returnType on handler $functionName")
-    }
+fun verifyPipeline(functionName: String, nextReturn: TypeName, returnType: TypeName, target: PipelineTarget) {
 
     val any = ANY.copy(nullable = true)
     if (!target.isStrict && (returnType != any || nextReturn != any)) {

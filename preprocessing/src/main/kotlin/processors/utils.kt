@@ -161,16 +161,12 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
 
             val nextType = TypeCache[nextTypeCandidate]
             if (nextType.isSuspendFunctionType) {
-                val nextRequestType = nextType.arguments.firstOrNull()?.toTypeName()
+                if (nextType.arguments.size > 1) {
+                    throw PreprocessingException("The \"next\" argument of pipeline handler $functionName should be of type:\n" +
+                            "() -> ${handlerMetadata.returnType}, found type: ${nextType.toTypeName()}")
+                }
 
-                if (nextRequestType == null) {
-                    val isNullable = if (TypeCache[requestArg.type].nullability == Nullability.NULLABLE) "?" else ""
-                    throw PreprocessingException(
-                    "The expected type of the \"next\" argument of handler $functionName is: " +
-                            "suspend (${TypeCache[requestArg.type].declaration.qualifiedName?.asString()}${isNullable}) -> <HandlerOutputType>"
-                )}
-
-                val nextReturnType = nextType.arguments.drop(1).firstOrNull()?.toTypeName()
+                val nextReturnType = nextType.arguments.firstOrNull()?.toTypeName()
 
                 if (nextReturnType == null)
                     throw PreprocessingException("There was an error during resolution of return type $nextReturnType for " +
@@ -191,8 +187,6 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
 
                 verifyPipeline(
                     functionName = functionName,
-                    requestType = resolvedRequestArg.toTypeName(),
-                    nextRequest = nextRequestType,
                     nextReturn = nextReturnType,
                     returnType = handlerMetadata.returnType,
                     target = pipelineTarget
@@ -205,7 +199,7 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
                 handlerRegistry.extend(resolvedRequestArg.toTypeName(), PipelineHandler(handlerMetadata, pipelineMetadata))
             } else {
                 throw PreprocessingException("Pipeline handler $functionName argument next should be of type:" +
-                        " suspend (${requestArg.name?.asString()}) -> <HandlerOutputType> and is of type $nextType")
+                        " suspend (${requestArg.name?.asString()}) -> ${handlerMetadata.returnType} and is of type $nextType")
             }
         }
     }

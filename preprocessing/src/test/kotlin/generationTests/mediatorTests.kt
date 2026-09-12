@@ -615,29 +615,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputOneClass(Nullability.NOT_NULL)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 returnTypePart()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputOneClass(Nullability.NOT_NULL)
-                                }
                             }
 
                             returnType {
@@ -681,29 +665,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputOneClass(Nullability.NULLABLE)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 returnTypePart()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputOneClass(Nullability.NULLABLE)
-                                }
                             }
 
                             returnType {
@@ -747,29 +715,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputTwoClass(Nullability.NOT_NULL)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 returnTypePart()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputTwoClass(Nullability.NOT_NULL)
-                                }
                             }
 
                             returnType {
@@ -817,29 +769,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputTwoClass(Nullability.NULLABLE)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 returnTypePart()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputTwoClass(Nullability.NULLABLE)
-                                }
                             }
 
                             returnType {
@@ -1182,29 +1118,14 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputOneClass(Nullability.NOT_NULL)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 returnTypePart()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
 
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputOneClass(Nullability.NOT_NULL)
-                                }
                             }
 
                             returnType {
@@ -1248,29 +1169,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputOneClass(Nullability.NULLABLE)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 unitReturnType()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputOneClass(Nullability.NULLABLE)
-                                }
                             }
 
                             returnType {
@@ -1316,29 +1221,14 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputTwoClass(Nullability.NULLABLE)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 unitReturnType()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
 
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputTwoClass(Nullability.NULLABLE)
-                                }
                             }
 
                             returnType {
@@ -1384,29 +1274,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputTwoClass(Nullability.NULLABLE)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 returnTypePart()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputTwoClass(Nullability.NULLABLE)
-                                }
                             }
 
                             returnType {
@@ -1452,21 +1326,11 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputOneClass(Nullability.NULLABLE)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 unitReturnType()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
                             }
@@ -1814,29 +1678,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputOneClass(Nullability.NOT_NULL)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 anyReturnType()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "kotlin.Any" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputOneClass(Nullability.NOT_NULL)
-                                }
                             }
 
                             returnType {
@@ -1881,29 +1729,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputOneClass(Nullability.NULLABLE)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 unitReturnType()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "$returnPackage.$returnType" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputOneClass(Nullability.NULLABLE)
-                                }
                             }
 
                             returnType {
@@ -1949,29 +1781,13 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                inputOneClass(Nullability.NULLABLE)
-                            }
-                        }
-
-                        argument {
-                            variance { Variance.INVARIANT }
-
-                            typeRef {
                                 anyReturnType()
                             }
                         }
 
                         functionDeclaration {
-                            typeParameter {}
-
                             typeParameter {
                                 name { "kotlin.Any" }
-                            }
-
-                            parameter {
-                                typeRef {
-                                    inputOneClass(Nullability.NULLABLE)
-                                }
                             }
 
                             returnType {

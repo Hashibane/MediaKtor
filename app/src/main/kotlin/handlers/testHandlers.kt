@@ -27,11 +27,11 @@ fun testNotifierTwo(arg: Request?) {
 
  
 @PipelineBehavior(order = 5, target = PipelineTarget.STRICT_NOTIFICATIONS)
-fun verify(arg: Request, next: suspend (Request) -> Unit) {
+fun verify(arg: Request, next: suspend () -> Unit) {
 
 }
 
 @PipelineBehavior(target = PipelineTarget.PASS_BOTH)
-suspend fun verify2(arg: Request?, next: suspend (Request?) -> Any?): Any? {
-    return next(arg)
+suspend fun verify2(arg: Request?, next: suspend () -> Any?): Any? {
+    return next()
 }

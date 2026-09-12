@@ -77,7 +77,13 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
             .forEach { (_, actualHandlers) ->
                 pipelines.addAll(actualHandlers.filterIsInstance<PipelineHandler>())
             }
-        pipelineCache[type] = pipelines.sortedBy { it.pipelineMetadata.order }.toMutableList()
+
+        val sortedPipes = pipelines.filter { it.pipelineMetadata.target.isStrict }
+            .sortedBy { it.pipelineMetadata.order }.toMutableList()
+        val passPipes = pipelines.filter { !it.pipelineMetadata.target.isStrict }
+            .sortedBy { it.pipelineMetadata.order }
+        sortedPipes.addAll(passPipes)
+        pipelineCache[type] = sortedPipes
     }
 
     sortedRegistry.forEach { (type, handlers) ->
@@ -95,15 +101,20 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
 
         requestHandlers.forEach { requestHandler ->
             for (handler in pipelineCache[type]!!.filter {
-                it.pipelineMetadata.target == PipelineTarget.REQUESTS ||
-                        (it.pipelineMetadata.target == PipelineTarget.BOTH && requestHandler.handlerMetadata.returnType == UNIT)
+                it.pipelineMetadata.target == PipelineTarget.STRICT_REQUESTS ||
+                        (it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH && requestHandler.handlerMetadata.returnType == UNIT) ||
+                        (!it.pipelineMetadata.target.isStrict &&
+                                (it.pipelineMetadata.target == PipelineTarget.PASS_REQUESTS
+                                        || it.pipelineMetadata.target == PipelineTarget.PASS_BOTH))
             }) {
                 val handlerReturn = requestHandler.handlerMetadata.returnType
+
                 val pipelineReturn = handler.handlerMetadata.returnType
+                val isStrict = handler.pipelineMetadata.target.isStrict
 
                 // We don't want incorrect program after adding a handler to responds to some child type and returns some
                 // arbitrary type, which would not be the same as handler with parent type.
-                if (pipelineReturn != handlerReturn) {
+                if (pipelineReturn != handlerReturn && isStrict) {
                     logger.info("Pipeline ${handler.handlerMetadata.generatedClass.simpleName} was not applied to " +
                             "handler ${requestHandler.handlerMetadata.generatedClass.simpleName} because the return types do not match." +
                             "Pipeline return type: $pipelineReturn. Handler type: $handlerReturn")
@@ -128,13 +139,12 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
 
         if (notificationHandlers.isNotEmpty()) {
             for (handler in pipelineCache[type]!!.filter {
-                it.pipelineMetadata.target == PipelineTarget.NOTIFICATIONS || it.pipelineMetadata.target == PipelineTarget.BOTH
+                it.pipelineMetadata.target == PipelineTarget.STRICT_NOTIFICATIONS ||
+                        it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH ||
+                        (!it.pipelineMetadata.target.isStrict &&
+                                (it.pipelineMetadata.target == PipelineTarget.PASS_NOTIFICATIONS
+                                        || it.pipelineMetadata.target == PipelineTarget.PASS_BOTH))
             }) {
-                if (handler.handlerMetadata.returnType != UNIT)
-                    throw PreprocessingException("All notification/both pipelines must return Unit type. Handler: " +
-                            "${handler.handlerMetadata.generatedClass.simpleName}. " +
-                            "Expected type: Unit, current type: ${handler.handlerMetadata.returnType}")
-
                 val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
                 publishBuilder.beginControlFlow("%L().handleRequest(%L)", propName, parameterName)
 

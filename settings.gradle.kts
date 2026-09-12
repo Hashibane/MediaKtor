@@ -24,4 +24,3 @@ include(":core")
 include(":preprocessing")
 
 rootProject.name = "MediaKtor"
-include("preprocessing")

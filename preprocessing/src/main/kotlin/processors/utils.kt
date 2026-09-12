@@ -13,7 +13,6 @@ import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
-import com.squareup.kotlinpoet.ksp.toClassName
 import com.squareup.kotlinpoet.ksp.toTypeName
 import com.squareup.kotlinpoet.ksp.toTypeVariableName
 import errors.PreprocessingException
@@ -162,39 +161,47 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
 
             val nextType = TypeCache[nextTypeCandidate]
             if (nextType.isSuspendFunctionType) {
-                val requestType = nextType.arguments.firstOrNull()
+                val nextRequestType = nextType.arguments.firstOrNull()?.toTypeName()
 
-                if (requestType == null) {
+                if (nextRequestType == null) {
                     val isNullable = if (TypeCache[requestArg.type].nullability == Nullability.NULLABLE) "?" else ""
                     throw PreprocessingException(
                     "The expected type of the \"next\" argument of handler $functionName is: " +
                             "suspend (${TypeCache[requestArg.type].declaration.qualifiedName?.asString()}${isNullable}) -> <HandlerOutputType>"
                 )}
 
-                if (requestType.toTypeName() != resolvedRequestArg.toTypeName()) {
-                    val isNullalbe = if (resolvedRequestArg.nullability == Nullability.NULLABLE) "?" else ""
-                    throw PreprocessingException("The request type must be the same as type of \"next\" parameter." +
-                            " Expected type suspend (${TypeCache[requestArg.type].declaration.simpleName.asString()}$isNullalbe) ->" +
-                            " ${TypeCache[returnType].declaration.simpleName.asString()} on handler $functionName")
-                }
+                val nextReturnType = nextType.arguments.drop(1).firstOrNull()?.toTypeName()
 
-
-                val returnType = nextType.declaration.typeParameters.drop(1).firstOrNull()
-
-                if (returnType == null)
-                    throw PreprocessingException("There was an error during resolution of return type $returnType for " +
+                if (nextReturnType == null)
+                    throw PreprocessingException("There was an error during resolution of return type $nextReturnType for " +
                             "handler $functionName of \"next\" argument")
 
-                val pipelineMetadata = PipelineMetadata(returnType.toTypeVariableName(),
-                    order.toInt(),
-                    when (target) {
-                    "PipelineTarget.REQUESTS" -> PipelineTarget.REQUESTS
-                    "PipelineTarget.NOTIFICATIONS" -> PipelineTarget.NOTIFICATIONS
-                        "PipelineTarget.BOTH" -> PipelineTarget.BOTH
+
+                val pipelineTarget = when (target) {
+                    "PipelineTarget.STRICT_REQUESTS" -> PipelineTarget.STRICT_REQUESTS
+                    "PipelineTarget.STRICT_NOTIFICATIONS" -> PipelineTarget.STRICT_NOTIFICATIONS
+                    "PipelineTarget.STRICT_BOTH" -> PipelineTarget.STRICT_BOTH
+                    "PipelineTarget.PASS_REQUESTS" -> PipelineTarget.PASS_REQUESTS
+                    "PipelineTarget.PASS_NOTIFICATIONS" -> PipelineTarget.PASS_NOTIFICATIONS
+                    "PipelineTarget.PASS_BOTH" -> PipelineTarget.PASS_BOTH
                     else -> throw PreprocessingException(
                         "Unknown target specifier $target on" +
                                 " pipeline function $functionName. Expected REQUESTS, NOTIFICATIONS or BOTH.")
-                    })
+                }
+
+                verifyPipeline(
+                    functionName = functionName,
+                    requestType = resolvedRequestArg.toTypeName(),
+                    nextRequest = nextRequestType,
+                    nextReturn = nextReturnType,
+                    returnType = handlerMetadata.returnType,
+                    target = pipelineTarget
+                )
+
+                val pipelineMetadata = PipelineMetadata(nextReturnType,
+                    order.toInt(),
+                    pipelineTarget
+                )
                 handlerRegistry.extend(resolvedRequestArg.toTypeName(), PipelineHandler(handlerMetadata, pipelineMetadata))
             } else {
                 throw PreprocessingException("Pipeline handler $functionName argument next should be of type:" +

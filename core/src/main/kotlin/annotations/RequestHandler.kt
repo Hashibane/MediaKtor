@@ -11,7 +11,7 @@ annotation class NotificationHandler(val lifespan: HandlerLifespan = HandlerLife
 @Target(AnnotationTarget.FUNCTION)
 annotation class PipelineBehavior(val lifespan: HandlerLifespan = HandlerLifespan.SINGLE,
                                   val order: Int = Int.MIN_VALUE,
-                                  val target: PipelineTarget = PipelineTarget.REQUESTS)
+                                  val target: PipelineTarget = PipelineTarget.PASS_BOTH)
 
 // TODO: Should the parallelism be set to SEQUENTIAL or PARALLEL by default?
 /*

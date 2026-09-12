@@ -1,24 +1,20 @@
 package generationTests
 
-import MockKSPLogger
 import annotations.NotificationParallel
 import annotations.PipelineTarget
 import argument
 import classDeclaration
 import classKind
-import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassifierReference
 import com.google.devtools.ksp.symbol.KSTypeReference
-import com.google.devtools.ksp.symbol.KSValueParameter
 import com.google.devtools.ksp.symbol.Nullability
 import com.google.devtools.ksp.symbol.Variance
 import com.squareup.kotlinpoet.TypeName
 import element
 import functionDeclaration
 import generateStringOutput
-import io.github.oshai.kotlinlogging.KotlinLogging
 import io.mockk.every
 import io.mockk.mockkClass
 import isSuspendFunctionType
@@ -568,7 +564,7 @@ class MediatorTests {
 
         val pipelineOneName = "pipelineOne"
         val pipelineOne = functionDeclaration {
-            setupHandler(pipelineOneName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.REQUESTS))
+            setupHandler(pipelineOneName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.STRICT_REQUESTS))
 
             parameter {
                 name { "request" }
@@ -631,7 +627,7 @@ class MediatorTests {
 
         val pipelineTwoName = "pipelineTwo"
         val pipelineTwo = functionDeclaration {
-            setupHandler(pipelineTwoName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.REQUESTS))
+            setupHandler(pipelineTwoName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.STRICT_REQUESTS))
 
             parameter {
                 name { "request" }
@@ -694,7 +690,7 @@ class MediatorTests {
 
         val pipelineThreeName = "pipelineThree"
         val pipelineThree = functionDeclaration {
-            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1, PipelineTarget.REQUESTS))
+            setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1, PipelineTarget.STRICT_REQUESTS))
 
             parameter {
                 name { "request" }
@@ -757,7 +753,7 @@ class MediatorTests {
 
         val pipelineFourName = "pipelineFour"
         val pipelineFour = functionDeclaration {
-            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class), Int.MIN_VALUE, PipelineTarget.REQUESTS))
+            setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class), Int.MIN_VALUE, PipelineTarget.STRICT_REQUESTS))
 
             parameter {
                 name { "request" }
@@ -1102,7 +1098,7 @@ class MediatorTests {
         val pipelineOneName = "pipelineOne"
         val pipelineOne = functionDeclaration {
             setupHandler(pipelineOneName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.REQUESTS))
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.STRICT_REQUESTS))
 
             parameter {
                 name { "request" }
@@ -1166,7 +1162,7 @@ class MediatorTests {
         val pipelineTwoName = "pipelineTwo"
         val pipelineTwo = functionDeclaration {
             setupHandler(pipelineTwoName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.REQUESTS))
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.STRICT_REQUESTS))
 
             parameter {
                 name { "request" }
@@ -1230,7 +1226,7 @@ class MediatorTests {
         val pipelineThreeName = "pipelineThree"
         val pipelineThree = functionDeclaration {
             setupHandler(pipelineThreeName, additionalData = PipelineMetadata(mockkClass(TypeName::class), 1,
-                PipelineTarget.BOTH
+                PipelineTarget.STRICT_BOTH
             ))
 
             parameter {
@@ -1295,7 +1291,7 @@ class MediatorTests {
         val pipelineFourName = "pipelineFour"
         val pipelineFour = functionDeclaration {
             setupHandler(pipelineFourName, additionalData = PipelineMetadata(mockkClass(TypeName::class),
-                Int.MIN_VALUE, PipelineTarget.REQUESTS))
+                Int.MIN_VALUE, PipelineTarget.STRICT_REQUESTS))
 
             parameter {
                 name { "request" }
@@ -1359,7 +1355,7 @@ class MediatorTests {
         val pipelineFiveName = "pipelineFive"
         val pipelineFive = functionDeclaration {
             setupHandler(pipelineFiveName, additionalData = PipelineMetadata(mockkClass(TypeName::class),
-                Int.MIN_VALUE, PipelineTarget.NOTIFICATIONS))
+                Int.MIN_VALUE, PipelineTarget.STRICT_NOTIFICATIONS))
 
             parameter {
                 name { "request" }

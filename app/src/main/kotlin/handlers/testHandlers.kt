@@ -5,7 +5,6 @@ import annotations.NotificationHandler
 import annotations.PipelineBehavior
 import annotations.PipelineTarget
 import annotations.RequestHandler
-import kotlinx.coroutines.coroutineScope
 
 data class Request(val content: String)
 
@@ -27,12 +26,12 @@ fun testNotifierTwo(arg: Request?) {
 }
 
  
-@PipelineBehavior(order = 5, target = PipelineTarget.NOTIFICATIONS)
+@PipelineBehavior(order = 5, target = PipelineTarget.STRICT_NOTIFICATIONS)
 fun verify(arg: Request, next: suspend (Request) -> Unit) {
 
 }
 
-@PipelineBehavior(target = PipelineTarget.BOTH)
-fun verify2(arg: Request?, next: suspend (Request?) -> Unit) {
-
+@PipelineBehavior(target = PipelineTarget.PASS_BOTH)
+suspend fun verify2(arg: Request?, next: suspend (Request?) -> Any?): Any? {
+    return next(arg)
 }

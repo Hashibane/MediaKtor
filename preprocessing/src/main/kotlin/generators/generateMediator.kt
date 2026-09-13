@@ -1,16 +1,21 @@
 package generators
 
 import annotations.NotificationParallel
+import annotations.PipelineTarget
+import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.*
-import metadata.HandlerMetadata
-import metadata.NotificationHandlerMetadata
+import metadata.HandlerType
+import metadata.NotificationHandler
+import metadata.PipelineHandler
+import metadata.RequestHandler
 import kotlin.collections.forEach
 
 data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
-data class NotificationGenerationData(val name: String, val order: Int, val isParallel: Boolean)
 
-fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
-    if (handlers.isEmpty()) return null
+fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
+                     typeSorter: Comparator<TypeName>, logger: KSPLogger
+): MediatorMetadata? {
+    if (handlerRegistry.isEmpty()) return null
 
     val superInterface = ClassName("interfaces", "Mediator")
 
@@ -19,90 +24,156 @@ fun generateMediator(handlers: List<HandlerMetadata>): MediatorMetadata? {
         .addSuperinterface(superInterface)
 
     val constructorBuilder = FunSpec.constructorBuilder()
-    handlers.forEach {
-        // Should be unique due to name generation
-        val className = it.generatedClass
-        val propName = className.simpleName.lowercase()
+    handlerRegistry.forEach { (_, handlers) ->
+        handlers.forEach {
+            // Should be unique due to name generation
+            val className = it.handlerMetadata.generatedClass
+            val propName = className.simpleName.lowercase()
 
-        val lambdaType = LambdaTypeName.get(returnType = className).copy(suspending = true)
-        constructorBuilder.addParameter(propName, lambdaType)
+            val lambdaType = LambdaTypeName.get(returnType = className).copy(suspending = true)
+            constructorBuilder.addParameter(propName, lambdaType)
 
-        mediatorBuilder.addProperty(
-            PropertySpec.builder(propName, lambdaType)
-                .initializer(propName)
-                .addModifiers(KModifier.PRIVATE)
-                .build()
-        )
+            mediatorBuilder.addProperty(
+                PropertySpec.builder(propName, lambdaType)
+                    .initializer(propName)
+                    .addModifiers(KModifier.PRIVATE)
+                    .build()
+            )
+        }
     }
 
     mediatorBuilder.primaryConstructor(constructorBuilder.build())
 
-    val parameterName = "command"
+    val requestParameterName = "message"
+    val notificationParameterName = "notification"
 
-    val invokeBuilder = FunSpec.builder("invoke")
-        .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE, KModifier.OPERATOR)
-        .addTypeVariable(TypeVariableName("T", Any::class))
-        .addParameter(parameterName, TypeVariableName("T"))
+    val invokeBuilder = FunSpec.builder("send")
+        .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE)
+        .addParameter(requestParameterName, ANY.copy(nullable = true))
         .returns(ANY.copy(nullable = true))
-        .beginControlFlow("return when (%L)", parameterName)
-
-    handlers.filter { it.notificationHandlerData == null } .forEach {
-        val propName = it.generatedClass.simpleName.lowercase()
-        invokeBuilder.beginControlFlow("is %T ->", it.inputType)
-            .addStatement("%L().handleRequest(%L)", propName, parameterName)
-            .endControlFlow()
-    }
-
-
-    val line = "No handler registered for command $$parameterName"
-    invokeBuilder
-        .addStatement("else -> throw IllegalArgumentException(%P)", line)
-        .endControlFlow()
-
-    mediatorBuilder.addFunction(invokeBuilder.build())
-
-    val notificationHandlerMap = mutableMapOf<TypeName, MutableList<NotificationGenerationData>>()
-    handlers.filter { it.notificationHandlerData != null }.forEach {
-        if (notificationHandlerMap[it.inputType] == null) {
-            notificationHandlerMap[it.inputType] = mutableListOf()
-        }
-
-        notificationHandlerMap[it.inputType]?.add(
-            NotificationGenerationData(
-                it.generatedClass.simpleName.lowercase(),
-                it.notificationHandlerData?.order!!,
-                it.notificationHandlerData.parallel == NotificationParallel.PARALLEL
-            )
-        )
-    }
+        .beginControlFlow("return when (%L)", requestParameterName)
 
     val publishBuilder = FunSpec.builder("publish")
         .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE)
-        .addTypeVariable(TypeVariableName("T", Any::class))
-        .addParameter(parameterName, TypeVariableName("T"))
-        .beginControlFlow("when (%L)", parameterName)
+        .addParameter(notificationParameterName, ANY.copy(nullable = true))
+        .beginControlFlow("when (%L)", notificationParameterName)
+
+    val sortedRegistry = handlerRegistry.toSortedMap(typeSorter)
 
     val coroutineScope = MemberName("kotlinx.coroutines", "coroutineScope")
     val launch = MemberName("kotlinx.coroutines", "launch")
 
-    notificationHandlerMap.forEach { (typeName, handlers) ->
-        publishBuilder.beginControlFlow("is %T ->", typeName)
-        publishBuilder.beginControlFlow("%M", coroutineScope)
+    val pipelineCache: MutableMap<TypeName, MutableList<PipelineHandler>> = mutableMapOf()
 
-        handlers.sortedBy { it.order }.forEach {
-            if (it.isParallel) {
-                publishBuilder.beginControlFlow("%M", launch)
+    // TODO : can reduce from Theta(n^2)? We refilter PipelineHandlers each iteration
+    // Don't think it's a problem for now, since n is small
+    sortedRegistry.forEach { (type, handlers) ->
+        val pipelines = handlers.filterIsInstance<PipelineHandler>().toMutableList()
+
+        sortedRegistry
+            .filter { (candidateType, _) -> typeSorter.compare(candidateType, type) > 0 }
+            .forEach { (_, actualHandlers) ->
+                pipelines.addAll(actualHandlers.filterIsInstance<PipelineHandler>())
             }
-            publishBuilder.addStatement("%L().handleRequest(%L)", it.name, parameterName)
-            if (it.isParallel) {
-                publishBuilder.endControlFlow()
+
+        val strictPipes = pipelines.filter { it.pipelineMetadata.target.isStrict }
+            .sortedBy { it.pipelineMetadata.order }
+        val allPipes = pipelines.filter { !it.pipelineMetadata.target.isStrict }
+            .sortedBy { it.pipelineMetadata.order }.toMutableList()
+        allPipes.addAll(strictPipes)
+        pipelineCache[type] = allPipes
+    }
+
+    sortedRegistry.forEach { (type, handlers) ->
+        val requestHandlers = handlers.filterIsInstance<RequestHandler>()
+        if (requestHandlers.isNotEmpty())
+            invokeBuilder.beginControlFlow("is %T ->", type)
+
+        val notificationHandlers = handlers.filterIsInstance<NotificationHandler>()
+        if (notificationHandlers.isNotEmpty()) {
+            publishBuilder.beginControlFlow("is %T ->", type)
+            publishBuilder.beginControlFlow("%M", coroutineScope)
+        }
+
+        var unskipped = 0
+
+        requestHandlers.forEach { requestHandler ->
+            for (handler in pipelineCache[type]!!.filter {
+                it.pipelineMetadata.target == PipelineTarget.STRICT_REQUESTS ||
+                        it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH ||
+                        it.pipelineMetadata.target == PipelineTarget.PASS_REQUESTS ||
+                        it.pipelineMetadata.target == PipelineTarget.PASS_BOTH
+            }) {
+                val handlerReturn = requestHandler.handlerMetadata.returnType
+
+                val pipelineReturn = handler.handlerMetadata.returnType
+                val isStrict = handler.pipelineMetadata.target.isStrict
+
+                // We don't want incorrect program after adding a handler to responds to some child type and returns some
+                // arbitrary type, which would not be the same as handler with parent type.
+                if (pipelineReturn != handlerReturn && isStrict) {
+                    logger.info("Pipeline ${handler.handlerMetadata.generatedClass.simpleName} was not applied to " +
+                            "handler ${requestHandler.handlerMetadata.generatedClass.simpleName} because the return types do not match." +
+                            "Pipeline return type: $pipelineReturn. Handler type: $handlerReturn")
+                } else {
+                    val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
+                    invokeBuilder.beginControlFlow("%L().handleRequest(%L)", propName, requestParameterName)
+
+                    unskipped += 1
+                }
+            }
+
+            val propName = requestHandler.handlerMetadata.generatedClass.simpleName.lowercase()
+            invokeBuilder.addStatement("%L().handleRequest(%L)", propName, requestParameterName)
+
+            // + 1 for "is %T"
+            repeat (unskipped + 1) {
+                invokeBuilder.endControlFlow()
             }
         }
 
-        publishBuilder.endControlFlow().endControlFlow()
+        unskipped = 0
+
+        if (notificationHandlers.isNotEmpty()) {
+            for (handler in pipelineCache[type]!!.filter {
+                it.pipelineMetadata.target == PipelineTarget.STRICT_NOTIFICATIONS ||
+                        it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH ||
+                        it.pipelineMetadata.target == PipelineTarget.PASS_NOTIFICATIONS ||
+                        it.pipelineMetadata.target == PipelineTarget.PASS_BOTH
+            }) {
+                val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
+                publishBuilder.beginControlFlow("%L().handleRequest(%L)", propName, notificationParameterName)
+
+                unskipped += 1
+            }
+
+            notificationHandlers.sortedBy { it.notificationMetadata.order }.forEach {
+                val propName = it.handlerMetadata.generatedClass.simpleName.lowercase()
+                val isParallel = it.notificationMetadata.parallel == NotificationParallel.PARALLEL
+                if (isParallel) {
+                    publishBuilder.beginControlFlow("%M", launch)
+                }
+                publishBuilder.addStatement("%L().handleRequest(%L)", propName, notificationParameterName)
+                if (isParallel) {
+                    publishBuilder.endControlFlow()
+                }
+            }
+
+            // + 2 for coroutine scope and "is %T ->"
+            repeat (unskipped + 2) {
+                publishBuilder.endControlFlow()
+            }
+        }
     }
 
-    val notificationLine = "No handler registered for notification $$parameterName"
+    val requestLine = "No handler registered for command $$requestParameterName"
+    invokeBuilder
+        .addStatement("else -> throw IllegalArgumentException(%P)", requestLine)
+        .endControlFlow()
+
+    mediatorBuilder.addFunction(invokeBuilder.build())
+
+    val notificationLine = "No handler registered for notification $$notificationParameterName"
     publishBuilder
         .addStatement("else -> throw IllegalArgumentException(%P)", notificationLine)
         .endControlFlow()

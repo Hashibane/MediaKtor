@@ -8,16 +8,32 @@ import com.google.devtools.ksp.symbol.KSAnnotated
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSVisitorVoid
 import com.google.devtools.ksp.validate
+import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.ksp.writeTo
-import errors.PreprocessingException
 import generators.di.generateKtorDI
 import generators.generateHandler
 import generators.generateMediator
 import generators.utils.handlerDependencies
-import metadata.HandlerMetadata
+import metadata.HandlerDescriptor
+import metadata.HandlerType
 
 class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) : SymbolProcessor {
-    val handlerMetadata: MutableList<HandlerMetadata> = mutableListOf()
+    val handlerMetadata: MutableMap<TypeName, MutableList<HandlerType>> = mutableMapOf()
+    val inputTypeMetadata: MutableMap<TypeName, MutableList<TypeName>> = mutableMapOf()
+
+    // o1 <: o2 <=> compare > 0
+    inner class TypeSorter : Comparator<TypeName>  {
+        override fun compare(o1: TypeName?, o2: TypeName?): Int =
+            if (inputTypeMetadata[o2]?.contains(o1) == true) {
+                return 1
+            }
+            else if (o2 == null) {
+                return 0
+            } else {
+                return -1
+            }
+    }
+
     override fun process(resolver: Resolver): List<KSAnnotated> {
         resolver
             .getSymbolsWithAnnotation("annotations.RequestHandler")
@@ -29,20 +45,28 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
             .filter { it.validate() }
             .forEach { it.accept(NotificationHandlerVisitor(), Unit) }
 
+        resolver
+            .getSymbolsWithAnnotation("annotations.PipelineBehavior")
+            .filter { it.validate() }
+            .forEach { it.accept(PipelineHandlerVisitor(), Unit) }
+
         handlerMetadata.verifyMetadata()
 
-        handlerMetadata.forEach {
-            val handlerSpec = generateHandler(it)
-            val dependencies = handlerDependencies(it)
-            handlerSpec.writeTo(codeGenerator, dependencies)
+        handlerMetadata.forEach { (_, handlers) ->
+            handlers.forEach {
+                val handlerSpec = generateHandler(it)
+                val dependencies = handlerDependencies(it)
+                handlerSpec.writeTo(codeGenerator, dependencies)
+            }
         }
 
-        val mediatorMetadata = generateMediator(handlerMetadata)
-        val dependencies = handlerDependencies(handlerMetadata)
+        val allHandlers = handlerMetadata.flatMap { it.value }
+        val mediatorMetadata = generateMediator(handlerMetadata, TypeSorter(), logger)
+        val dependencies = handlerDependencies(allHandlers)
         mediatorMetadata?.fileSpec?.writeTo(codeGenerator, dependencies)
 
         if (mediatorMetadata != null) {
-            val diSpec = codeGenerator.generateKtorDI(handlerMetadata, mediatorMetadata.className)
+            val diSpec = codeGenerator.generateKtorDI(allHandlers, mediatorMetadata.className)
             diSpec.writeTo(codeGenerator, dependencies)
         }
 
@@ -63,7 +87,7 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            handlerMetadata.addMetadata(function, id, false)
+            addMetadata(handlerMetadata, function, id, HandlerDescriptor.REQUEST_HANDLER, inputTypeMetadata)
         }
     }
 
@@ -71,7 +95,15 @@ class HandlerProcessor(val codeGenerator: CodeGenerator, val logger: KSPLogger) 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            handlerMetadata.addMetadata(function, id, true)
+            addMetadata(handlerMetadata, function, id, HandlerDescriptor.NOTIFICATION_HANDLER, inputTypeMetadata)
+        }
+    }
+
+    inner class PipelineHandlerVisitor : KSVisitorVoid() {
+        override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
+            super.visitFunctionDeclaration(function, data)
+
+            addMetadata(handlerMetadata, function, id, HandlerDescriptor.PIPELINE_HANDLER, inputTypeMetadata)
         }
     }
 }

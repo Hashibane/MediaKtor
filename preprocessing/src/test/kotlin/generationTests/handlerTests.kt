@@ -66,6 +66,7 @@ class HandlerTests {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
@@ -73,62 +74,8 @@ class HandlerTests {
 
         val handlerCode = generatedCode.first()
         assert(handlerCode.contains("class Handler__${handlerName}__1"))
-        assert(handlerCode.contains(": RequestHandler<$inputClass, $outputClass>"))
         assert(handlerCode.contains("= $handlerName"))
-        assert(handlerCode.contains("override suspend fun handleRequest(request: $inputClass): $outputClass"))
-    }
-
-    @Test
-    fun `request handler nullable type`() {
-        val inputClass = "TestInputClass"
-        val outputClass = "TestReturnClass"
-        val handlerName = "testHandler"
-
-        val funDecl = functionDeclaration {
-            setupHandler(handlerName)
-
-            parameter {
-                typeRef {
-                    type {
-                        nullability { Nullability.NULLABLE }
-                        classDeclaration {
-                            packageName { "paramPackage" }
-                            qualifiedName { "paramPackage.$inputClass" }
-                            classKind { ClassKind.CLASS }
-                        }
-                    }
-                    element {
-                        mockkClass(KSClassifierReference::class)
-                    }
-                }
-            }
-
-            returnType {
-                type {
-                    nullability { Nullability.NULLABLE }
-                    classDeclaration {
-                        packageName { "returnPackage" }
-                        qualifiedName { "returnPackage.$outputClass" }
-                        classKind { ClassKind.CLASS }
-                    }
-                }
-            }
-        }
-
-        val generatedCode = generateStringOutput(1) {
-            val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-
-            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
-            process(resolver)
-        }
-
-        val handlerCode = generatedCode.first()
-        assert(handlerCode.contains("class Handler__${handlerName}__1"))
-        assert(handlerCode.contains(": RequestHandler<$inputClass?, $outputClass?>"))
-        assert(handlerCode.contains("= $handlerName"))
-        assert(handlerCode.contains("override suspend fun handleRequest(request: $inputClass?): $outputClass?"))
+        assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): $outputClass"))
     }
 
     @Test
@@ -144,7 +91,7 @@ class HandlerTests {
             parameter {
                 typeRef {
                     type {
-                        nullability { Nullability.NULLABLE }
+                        nullability { Nullability.NOT_NULL }
                         classDeclaration {
                             packageName { "paramPackage" }
                             qualifiedName { "paramPackage.$inputClass" }
@@ -187,6 +134,7 @@ class HandlerTests {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
@@ -194,9 +142,8 @@ class HandlerTests {
 
         val handlerCode = generatedCode.first()
         assert(handlerCode.contains("class Handler__${handlerName}__1"))
-        assert(handlerCode.contains(": RequestHandler<$inputClass?, $outputClass<out $typeParamName>?>"))
         assert(handlerCode.contains("= $handlerName"))
-        assert(handlerCode.contains("override suspend fun handleRequest(request: $inputClass?): " +
+        assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass<out $typeParamName>?"))
 
     }
@@ -214,7 +161,7 @@ class HandlerTests {
             parameter {
                 typeRef {
                     type {
-                        nullability { Nullability.NULLABLE }
+                        nullability { Nullability.NOT_NULL }
                         classDeclaration {
                             packageName { "paramPackage" }
                             qualifiedName { "paramPackage.$inputClass" }
@@ -257,6 +204,7 @@ class HandlerTests {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
@@ -264,9 +212,8 @@ class HandlerTests {
 
         val handlerCode = generatedCode.first()
         assert(handlerCode.contains("class Handler__${handlerName}__1"))
-        assert(handlerCode.contains(": RequestHandler<$inputClass?, $outputClass<$typeParamName?>?>"))
         assert(handlerCode.contains("= $handlerName"))
-        assert(handlerCode.contains("override suspend fun handleRequest(request: $inputClass?): " +
+        assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass<$typeParamName?>?"))
 
     }
@@ -282,7 +229,7 @@ class HandlerTests {
             parameter {
                 typeRef {
                     type {
-                        nullability { Nullability.NULLABLE }
+                        nullability { Nullability.NOT_NULL }
                         classDeclaration {
                             packageName { "paramPackage" }
                             qualifiedName { "paramPackage.$inputClass" }
@@ -315,6 +262,7 @@ class HandlerTests {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
@@ -322,9 +270,8 @@ class HandlerTests {
 
         val handlerCode = generatedCode.first()
         assert(handlerCode.contains("class Handler__${handlerName}__1"))
-        assert(handlerCode.contains(": RequestHandler<$inputClass?, $outputClass<*>?>"))
         assert(handlerCode.contains("= $handlerName"))
-        assert(handlerCode.contains("override suspend fun handleRequest(request: $inputClass?): " +
+        assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass<*>?"))
 
     }
@@ -342,7 +289,7 @@ class HandlerTests {
                 name { "first" }
                 typeRef {
                     type {
-                        nullability { Nullability.NULLABLE }
+                        nullability { Nullability.NOT_NULL }
                         classDeclaration {
                             packageName { "paramPackage" }
                             qualifiedName { "paramPackage.$inputClass" }
@@ -388,6 +335,7 @@ class HandlerTests {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
@@ -395,10 +343,9 @@ class HandlerTests {
 
         val handlerCode = generatedCode.first()
         assert(handlerCode.contains("class Handler__${handlerName}__1"))
-        assert(handlerCode.contains(": RequestHandler<$inputClass?, $outputClass?>"))
         assert(handlerCode.contains("val second: $argClass"))
         assert(handlerCode.contains("= $handlerName"))
-        assert(handlerCode.contains("override suspend fun handleRequest(request: $inputClass?): " +
+        assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass?"))
 
     }
@@ -416,7 +363,7 @@ class HandlerTests {
                 name { "first" }
                 typeRef {
                     type {
-                        nullability { Nullability.NULLABLE }
+                        nullability { Nullability.NOT_NULL }
                         classDeclaration {
                             packageName { "paramPackage" }
                             qualifiedName { "paramPackage.$inputClass" }
@@ -462,6 +409,7 @@ class HandlerTests {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
             process(resolver)
@@ -469,9 +417,8 @@ class HandlerTests {
 
         val handlerCode = generatedCode.first()
         assert(handlerCode.contains("class Handler__${handlerName}__1"))
-        assert(handlerCode.contains(": RequestHandler<$inputClass?, $outputClass?>"))
         assert(handlerCode.contains("= $handlerName"))
-        assert(handlerCode.contains("override suspend fun handleRequest(request: $inputClass?): " +
+        assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass?"))
 
     }

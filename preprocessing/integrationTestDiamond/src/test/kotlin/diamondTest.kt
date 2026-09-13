@@ -80,13 +80,13 @@ suspend fun pipelineFive(arg: Type4, next: suspend () -> Unit): Unit {
 }
 
 
-val appModule = module {
-    provideMediator()
-}
-
 class IntegrationTests {
     @Test
     fun `diamond integration test`() {
+        val appModule = module {
+            provideMediator()
+        }
+
         val koin = koinApplication {
             modules(appModule)
         }.koin

@@ -30,7 +30,7 @@ fun generateHandler(
 
     handlerDeclaration.primaryConstructor(constructorBuilder.build())
 
-    val propertySpecs = handlerDeclaration.propertySpecs.toTypedArray()
+    val propertySpecs = metadata.args.toTypedArray()
 
     val functionDeclaration = FunSpec.builder("handleRequest")
         .addModifiers(KModifier.SUSPEND)
@@ -45,7 +45,7 @@ fun generateHandler(
     handlerDeclaration.addFunction(
         functionDeclaration.returns(metadata.returnType)
             .addStatement(
-                "return %M(%L, ${propertySpecs.joinToString(", ") { "%N" }} ${if (isPipeline) "next=next" else ""})",
+                "return %M(%L, ${propertySpecs.joinToString(",") { "%N" }})",
                 metadata.memberName, "request", *propertySpecs
             )
             .build())

@@ -6,6 +6,7 @@ import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import mediaktorKoin.provideMediator
+import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import org.koin.ktor.ext.inject
 import org.koin.ktor.plugin.Koin
@@ -14,11 +15,16 @@ fun main(args: Array<String>) {
     EngineMain.main(args)
 }
 
-val appModule = module {
-    provideMediator()
-}
+
 
 fun Application.module() {
+    val appModule = module {
+        // Your handler dependencies - loggers, database connections etc.
+        single { log }
+
+        provideMediator()
+    }
+
     install(Koin) {
         modules(appModule)
     }
@@ -26,7 +32,13 @@ fun Application.module() {
     val mediator by inject<Mediator>()
 
     routing {
-        get("/test/{text}") {
+        get("/requests/{text}") {
+            val echoText = call.parameters["text"].toString()
+            val response = mediator.send(Request(echoText))
+            call.respond(HttpStatusCode.OK, response.toString())
+        }
+
+        get("/notifications/{text}") {
             val echoText = call.parameters["text"].toString()
             val response = mediator.publish(Request(echoText))
             call.respond(HttpStatusCode.OK, response.toString())

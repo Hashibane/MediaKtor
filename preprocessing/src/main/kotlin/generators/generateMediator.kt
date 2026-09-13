@@ -4,7 +4,6 @@ import annotations.NotificationParallel
 import annotations.PipelineTarget
 import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.*
-import errors.PreprocessingException
 import metadata.HandlerType
 import metadata.NotificationHandler
 import metadata.PipelineHandler
@@ -45,20 +44,19 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
 
     mediatorBuilder.primaryConstructor(constructorBuilder.build())
 
-    val parameterName = "command"
+    val requestParameterName = "message"
+    val notificationParameterName = "notification"
 
-    val invokeBuilder = FunSpec.builder("invoke")
-        .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE, KModifier.OPERATOR)
-        .addTypeVariable(TypeVariableName("T", Any::class))
-        .addParameter(parameterName, TypeVariableName("T"))
+    val invokeBuilder = FunSpec.builder("send")
+        .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE)
+        .addParameter(requestParameterName, ANY.copy(nullable = true))
         .returns(ANY.copy(nullable = true))
-        .beginControlFlow("return when (%L)", parameterName)
+        .beginControlFlow("return when (%L)", requestParameterName)
 
     val publishBuilder = FunSpec.builder("publish")
         .addModifiers(KModifier.SUSPEND, KModifier.OVERRIDE)
-        .addTypeVariable(TypeVariableName("T", Any::class))
-        .addParameter(parameterName, TypeVariableName("T"))
-        .beginControlFlow("when (%L)", parameterName)
+        .addParameter(notificationParameterName, ANY.copy(nullable = true))
+        .beginControlFlow("when (%L)", notificationParameterName)
 
     val sortedRegistry = handlerRegistry.toSortedMap(typeSorter)
 
@@ -78,12 +76,12 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
                 pipelines.addAll(actualHandlers.filterIsInstance<PipelineHandler>())
             }
 
-        val sortedPipes = pipelines.filter { it.pipelineMetadata.target.isStrict }
-            .sortedBy { it.pipelineMetadata.order }.toMutableList()
-        val passPipes = pipelines.filter { !it.pipelineMetadata.target.isStrict }
+        val strictPipes = pipelines.filter { it.pipelineMetadata.target.isStrict }
             .sortedBy { it.pipelineMetadata.order }
-        sortedPipes.addAll(passPipes)
-        pipelineCache[type] = sortedPipes
+        val allPipes = pipelines.filter { !it.pipelineMetadata.target.isStrict }
+            .sortedBy { it.pipelineMetadata.order }.toMutableList()
+        allPipes.addAll(strictPipes)
+        pipelineCache[type] = allPipes
     }
 
     sortedRegistry.forEach { (type, handlers) ->
@@ -102,10 +100,9 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
         requestHandlers.forEach { requestHandler ->
             for (handler in pipelineCache[type]!!.filter {
                 it.pipelineMetadata.target == PipelineTarget.STRICT_REQUESTS ||
-                        (it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH && requestHandler.handlerMetadata.returnType == UNIT) ||
-                        (!it.pipelineMetadata.target.isStrict &&
-                                (it.pipelineMetadata.target == PipelineTarget.PASS_REQUESTS
-                                        || it.pipelineMetadata.target == PipelineTarget.PASS_BOTH))
+                        it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH ||
+                        it.pipelineMetadata.target == PipelineTarget.PASS_REQUESTS ||
+                        it.pipelineMetadata.target == PipelineTarget.PASS_BOTH
             }) {
                 val handlerReturn = requestHandler.handlerMetadata.returnType
 
@@ -120,14 +117,14 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
                             "Pipeline return type: $pipelineReturn. Handler type: $handlerReturn")
                 } else {
                     val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
-                    invokeBuilder.beginControlFlow("%L().handleRequest(%L)", propName, parameterName)
+                    invokeBuilder.beginControlFlow("%L().handleRequest(%L)", propName, requestParameterName)
 
                     unskipped += 1
                 }
             }
 
             val propName = requestHandler.handlerMetadata.generatedClass.simpleName.lowercase()
-            invokeBuilder.addStatement("%L().handleRequest(%L)", propName, parameterName)
+            invokeBuilder.addStatement("%L().handleRequest(%L)", propName, requestParameterName)
 
             // + 1 for "is %T"
             repeat (unskipped + 1) {
@@ -141,12 +138,11 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
             for (handler in pipelineCache[type]!!.filter {
                 it.pipelineMetadata.target == PipelineTarget.STRICT_NOTIFICATIONS ||
                         it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH ||
-                        (!it.pipelineMetadata.target.isStrict &&
-                                (it.pipelineMetadata.target == PipelineTarget.PASS_NOTIFICATIONS
-                                        || it.pipelineMetadata.target == PipelineTarget.PASS_BOTH))
+                        it.pipelineMetadata.target == PipelineTarget.PASS_NOTIFICATIONS ||
+                        it.pipelineMetadata.target == PipelineTarget.PASS_BOTH
             }) {
                 val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
-                publishBuilder.beginControlFlow("%L().handleRequest(%L)", propName, parameterName)
+                publishBuilder.beginControlFlow("%L().handleRequest(%L)", propName, notificationParameterName)
 
                 unskipped += 1
             }
@@ -157,7 +153,7 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
                 if (isParallel) {
                     publishBuilder.beginControlFlow("%M", launch)
                 }
-                publishBuilder.addStatement("%L().handleRequest(%L)", propName, parameterName)
+                publishBuilder.addStatement("%L().handleRequest(%L)", propName, notificationParameterName)
                 if (isParallel) {
                     publishBuilder.endControlFlow()
                 }
@@ -170,14 +166,14 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
         }
     }
 
-    val requestLine = "No handler registered for command $$parameterName"
+    val requestLine = "No handler registered for command $$requestParameterName"
     invokeBuilder
         .addStatement("else -> throw IllegalArgumentException(%P)", requestLine)
         .endControlFlow()
 
     mediatorBuilder.addFunction(invokeBuilder.build())
 
-    val notificationLine = "No handler registered for notification $$parameterName"
+    val notificationLine = "No handler registered for notification $$notificationParameterName"
     publishBuilder
         .addStatement("else -> throw IllegalArgumentException(%P)", notificationLine)
         .endControlFlow()

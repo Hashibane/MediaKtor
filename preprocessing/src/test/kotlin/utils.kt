@@ -163,7 +163,7 @@ internal fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lif
         name { "first" }
         typeRef {
             type {
-                nullability { Nullability.NULLABLE }
+                nullability { Nullability.NOT_NULL }
                 classDeclaration {
                     packageName { "paramPackage" }
                     qualifiedName { "paramPackage.type__$handlerName" }

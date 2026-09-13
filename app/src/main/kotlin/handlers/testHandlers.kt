@@ -21,7 +21,7 @@ fun testNotifier(arg: Request) {
 
 
 @NotificationHandler
-fun testNotifierTwo(arg: Request?) {
+fun testNotifierTwo(arg: Request) {
     println("got the notif 2")
 }
 
@@ -32,6 +32,6 @@ fun verify(arg: Request, next: suspend () -> Unit) {
 }
 
 @PipelineBehavior(target = PipelineTarget.PASS_BOTH)
-suspend fun verify2(arg: Request?, next: suspend () -> Any?): Any? {
+suspend fun verify2(arg: Request, next: suspend () -> Any?): Any? {
     return next()
 }

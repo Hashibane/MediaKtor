@@ -8,6 +8,7 @@ import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.Nullability
+import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.LambdaTypeName
 import com.squareup.kotlinpoet.MemberName
@@ -73,16 +74,16 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
 
     val resolvedClass = resolvedRequestArg.declaration as? KSClassDeclaration
 
-    if (resolvedClass != null && resolvedRequestArg.nullability == Nullability.NOT_NULL) {
-        val typename = resolvedRequestArg.toTypeName()
-        typeMetadata.extend(typename, typename.copy(nullable = true))
-    }
-    resolvedClass?.superTypes?.forEach {
-        if (resolvedRequestArg.nullability == Nullability.NOT_NULL)
-            typeMetadata.extend(resolvedRequestArg.toTypeName(), TypeCache[it].toTypeName())
-        typeMetadata.extend(resolvedRequestArg.toTypeName(), TypeCache[it].toTypeName().copy(nullable = true))
+    if (resolvedRequestArg.nullability == Nullability.NULLABLE) {
+        throw PreprocessingException("Nullable types are not allowed as request types." +
+                "The request type of handler $functionName must not be null and is ${resolvedRequestArg.toTypeName()}")
     }
 
+    resolvedClass?.superTypes?.forEach {
+        typeMetadata.extend(resolvedRequestArg.toTypeName(), TypeCache[it].toTypeName())
+    }
+
+    typeMetadata.extend(resolvedRequestArg.toTypeName(), ANY)
 
     val args = function.parameters.drop(1)
 
@@ -199,7 +200,7 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
                 handlerRegistry.extend(resolvedRequestArg.toTypeName(), PipelineHandler(handlerMetadata, pipelineMetadata))
             } else {
                 throw PreprocessingException("Pipeline handler $functionName argument next should be of type:" +
-                        " suspend (${requestArg.name?.asString()}) -> ${handlerMetadata.returnType} and is of type $nextType")
+                        " suspend () -> ${handlerMetadata.returnType} and is of type $nextType (maybe you need suspend?)")
             }
         }
     }

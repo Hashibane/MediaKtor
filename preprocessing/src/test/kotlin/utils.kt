@@ -7,7 +7,10 @@ import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.Nullability
 import io.mockk.every
 import io.mockk.mockkClass
+import metadata.AdditionalData
 import metadata.NotificationHandlerMetadata
+import metadata.PipelineHandler
+import metadata.PipelineMetadata
 import processors.HandlerProcessor
 import java.io.ByteArrayOutputStream
 
@@ -21,7 +24,7 @@ fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): Lis
     val codeGenerator = mockkClass(CodeGenerator::class)
     every { codeGenerator.createNewFile(any(), any(), any()) } returnsMany outputStreams
 
-    val logger = mockkClass(KSPLogger::class)
+    val logger = MockKSPLogger
     val processor = HandlerProcessor(codeGenerator, logger)
 
     processor.body()
@@ -30,8 +33,9 @@ fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): Lis
 }
 
 
-internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: HandlerLifespan = HandlerLifespan.SINGLE,
-                                                notificationHandlerData: NotificationHandlerMetadata? = null) {
+internal fun KSFunctionDeclaration.setupHandler(handlerName: String,
+                                                lifespan: HandlerLifespan = HandlerLifespan.SINGLE,
+                                                additionalData: AdditionalData? = null) {
     packageName { "handlers" }
     containingFile {
         packageName { "handlers" }
@@ -39,7 +43,11 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
 
     simpleName { handlerName }
 
-    val name = if (notificationHandlerData != null) "NotificationHandler" else "RequestHandler"
+    val name = when (additionalData) {
+        null -> "RequestHandler"
+        is NotificationHandlerMetadata -> "NotificationHandler"
+        is PipelineMetadata -> "PipelineBehavior"
+    }
     annotation {
         shortName { name }
         annotationType {
@@ -69,17 +77,17 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
                 }
             }
         }
-        if (notificationHandlerData != null) {
+        if (additionalData is NotificationHandlerMetadata) {
             argument {
                 name { "parallel" }
 
                 value {
                     classDeclaration {
                         packageName { "annotations" }
-                        qualifiedName { "annotations.NotificationParallel.${notificationHandlerData.parallel}" }
+                        qualifiedName { "annotations.NotificationParallel.${additionalData.parallel}" }
                         classKind { ClassKind.ENUM_ENTRY }
 
-                        every { this@classDeclaration.toString() } returns "NotificationParallel.${notificationHandlerData.parallel}"
+                        every { this@classDeclaration.toString() } returns "NotificationParallel.${additionalData.parallel}"
                         parentClassDeclaration {
                             packageName { "annotations" }
                             qualifiedName { "annotations.NotificationParallel" }
@@ -93,7 +101,37 @@ internal fun KSFunctionDeclaration.setupHandler(handlerName: String, lifespan: H
                 name { "order" }
 
                 value {
-                    notificationHandlerData.order
+                    additionalData.order
+                }
+            }
+        }
+
+        if (additionalData is PipelineMetadata) {
+            argument {
+                name { "target" }
+
+                value {
+                    classDeclaration {
+                        packageName { "annotations" }
+                        qualifiedName { "annotations.PipelineTarget.${additionalData.target}" }
+                        classKind { ClassKind.ENUM_ENTRY }
+
+                        every { this@classDeclaration.toString() } returns "PipelineTarget.${additionalData.target}"
+                        parentClassDeclaration {
+                            packageName { "annotations" }
+                            qualifiedName { "annotations.PipelineTarget" }
+                            classKind { ClassKind.ENUM_CLASS }
+                        }
+                    }
+                }
+            }
+
+
+            argument {
+                name { "order" }
+
+                value {
+                    additionalData.order
                 }
             }
         }
@@ -125,7 +163,7 @@ internal fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lif
         name { "first" }
         typeRef {
             type {
-                nullability { Nullability.NULLABLE }
+                nullability { Nullability.NOT_NULL }
                 classDeclaration {
                     packageName { "paramPackage" }
                     qualifiedName { "paramPackage.type__$handlerName" }

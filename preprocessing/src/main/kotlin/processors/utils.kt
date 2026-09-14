@@ -158,13 +158,13 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
 
             if (nextTypeCandidate == null)
                 throw PreprocessingException("Pipeline handler $functionName should have one argument named \"next\" of type: " +
-                        "(${requestArg.name?.asString()}) -> <HandlerOutputType>")
+                        "suspend () -> ${handlerMetadata.returnType}")
 
             val nextType = TypeCache[nextTypeCandidate]
             if (nextType.isSuspendFunctionType) {
                 if (nextType.arguments.size > 1) {
                     throw PreprocessingException("The \"next\" argument of pipeline handler $functionName should be of type:\n" +
-                            "() -> ${handlerMetadata.returnType}, found type: ${nextType.toTypeName()}")
+                            "suspend () -> ${handlerMetadata.returnType}, found type: ${nextType.toTypeName()}")
                 }
 
                 val nextReturnType = nextType.arguments.firstOrNull()?.toTypeName()

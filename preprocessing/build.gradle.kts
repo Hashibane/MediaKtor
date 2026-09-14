@@ -1,12 +1,25 @@
 plugins {
     kotlin("jvm")
+    `maven-publish`
 }
 
 group = "com.hashibane"
-version = "unspecified"
+version = "0.0.0"
 
 repositories {
     mavenCentral()
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("MediaKtor") {
+            groupId = "com.hashibane"
+            artifactId = "MediaKtor"
+            version = "0.0.0"
+
+            from(components["kotlin"])
+        }
+    }
 }
 
 dependencies {

@@ -51,7 +51,7 @@ Handlers are implemented through annotations. This means any function annotated 
 
 If no corresponding handlers request type is found for the request, IllegalArgumentException is thrown.
 
-Every handler has also config options. For handler options see <Link to handler options>
+Every handler has also config options. 
 
 ### Handler options
 
@@ -101,7 +101,7 @@ and may return any given type. There may only be one request handler for any giv
 via mediators ```send()``` method.
 
 #### Example
-```
+```kotlin
 data class Request(val content: String)
 
 @RequestHandler(HandlerLifespan.FACTORY)
@@ -125,7 +125,7 @@ type must always be Unit. Notifications are published via mediators ```publish()
 Notifications are run in order and can be run parallelly (the default). For details check out options ---LINK---.
 
 #### Example
-```
+```kotlin
 data class Request(val content: String)
 
 @NotificationHandler(order = 5)
@@ -157,7 +157,7 @@ If a strict pipeline does not match the return type but matches the request type
 
 #### Example
 
-```
+```kotlin
 data class Request(val content: String)
 
 @PipelineBehavior(target = PipelineTarget.STRICT_NOTIFICATIONS)
@@ -188,7 +188,7 @@ A pipeline will also intercept any calls that involve its request subtype.
 
 #### Example
 
-```
+```kotlin
 interface Request
 data class RequestSubtype(val content: String) : Request
 
@@ -217,7 +217,8 @@ fun publishNotification(notification: Request = RequestSubtype("subtype!")) {
 To automatically inject all required dependencies, declare a Koin module and call 
 `provideMediator()`:
 
-```
+#### Example
+```kotlin
 val appModule = module {
         // Your handler dependencies - loggers, database connections etc.
         single { logger }

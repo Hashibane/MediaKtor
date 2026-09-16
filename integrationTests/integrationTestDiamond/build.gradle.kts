@@ -12,8 +12,8 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
-    kspTest(project(":preprocessing"))
-    testImplementation(project(":core"))
+    kspTest(project(":projects:mediaktor-preprocessing"))
+    testImplementation(project(":projects:mediaktor-core"))
     testImplementation(platform(libs.koin.bom))
     testImplementation("io.insert-koin:koin-core")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")

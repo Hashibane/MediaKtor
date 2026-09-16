@@ -18,11 +18,31 @@ TODO
 
 ## Install
 
-TODO
+Include plugin KSP in your `build.gradle.kts`:
+```kotlin
+plugins {
+    ...
+    id("com.google.devtools.ksp") version <KSP version>
+}
+```
+
+and `mediaktor-preprocessing`, `mediaktor-core`, `koin` dependencies: 
+
+```kotlin
+dependencies {
+    implementation("com.hashibane:mediaktor-core:0.0.0")
+    ksp("com.hashibane:mediaktor-preprocessing:0.0.0")
+    
+    implementation(platform(libs.koin.bom))
+    implementation(libs.koin.core) // or other corresponding koin platform
+}
+```
 
 ## Quickstart
 
-TODO
+```kotlin
+
+```
 
 ## Usage
 
@@ -85,8 +105,6 @@ Every handler has also config options.
     | Target                 | Applied to                                                                            | Request type                       | Return type                  |
     |------------------------|---------------------------------------------------------------------------------------|------------------------------------|------------------------------|
     | `STRICT_REQUESTS`      | Request handlers that match request and return type                                   | Request handlers request type      | Request handlers return type |
-    | `STRICT_NOTIFICATIONS` | Notification handlers that match request type                                         | Notification handlers request type | Unit                         |
-    | `STRICT_BOTH`          | Notification or request handlers with matching <br/>request type and Unit return type | Handlers request type              | Unit                         |
     | `PASS_REQUEST`         | Request handlers that match request type                                              | Request handlers request type      | Any?                         |
     | `PASS_NOTIFICATIONS`   | Notification handlers that match request type                                         | Notification handlers request type | Any?                         |
     | `PASS_BOTH`            | Notification or request handlers that match request type                              | Handlers request type              | Any?                         |

@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.bundles.kotlinxEcosystem)
     testImplementation(kotlin("test"))
 
-    implementation(platform(libs.koin.bom))
-    implementation(libs.koin.ktor)
+    implementation("com.google.devtools.ksp:symbol-processing-api:2.3.6")
+    implementation("com.squareup:kotlinpoet:2.3.0")
+    implementation("com.squareup:kotlinpoet-ksp:2.3.0")
 }

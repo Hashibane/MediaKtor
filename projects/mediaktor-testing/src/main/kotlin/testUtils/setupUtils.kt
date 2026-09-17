@@ -2,6 +2,7 @@ package testUtils
 
 import annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.CodeGenerator
+import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
 import com.google.devtools.ksp.symbol.KSClassifierReference
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
@@ -17,7 +18,9 @@ import preprocessing.metadata.PipelineMetadata
 import preprocessing.processors.HandlerProcessor
 import java.io.ByteArrayOutputStream
 
-fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): List<String> {
+fun generateStringOutput(nHandlers: Int,
+                         handlerProcessorProvider: (CodeGenerator, KSPLogger) -> HandlerProcessor? = { _, _ -> null },
+                         body: HandlerProcessor.() -> Unit): List<String> {
     val outputStreams = mutableListOf<ByteArrayOutputStream>()
     // one per handler + 1 mediator + one DI
     repeat(nHandlers + 2) {
@@ -28,7 +31,7 @@ fun generateStringOutput(nHandlers: Int, body: HandlerProcessor.() -> Unit): Lis
     every { codeGenerator.createNewFile(any(), any(), any()) } returnsMany outputStreams
 
     val logger = MockKSPLogger
-    val processor = object : HandlerProcessor(codeGenerator, logger) {
+    val processor = handlerProcessorProvider(codeGenerator, logger) ?: object : HandlerProcessor(codeGenerator, logger) {
         override fun CodeGenerator.generateDI(
             handlers: List<HandlerType>,
             mediatorClass: ClassName

@@ -5,7 +5,6 @@ plugins {
 dependencies {
     testImplementation(kotlin("test"))
     implementation("io.mockk:mockk-jvm:1.14.11")
-    implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
 
     implementation(project(":projects:mediaktor-core"))
     implementation("com.google.devtools.ksp:symbol-processing-api:2.3.6")

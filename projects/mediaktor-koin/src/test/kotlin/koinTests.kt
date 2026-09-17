@@ -5,6 +5,7 @@ import testUtils.generateStringOutput
 import io.mockk.every
 import io.mockk.mockkClass
 import testUtils.setupHandlerLifespan
+import kotlin.math.log
 import kotlin.test.Test
 
 class KoinTests {
@@ -21,7 +22,7 @@ class KoinTests {
             setupHandlerLifespan(handlerTwoName, HandlerLifespan.FACTORY)
         }
 
-        val generatedCode = generateStringOutput(1) {
+        val generatedCode = generateStringOutput(1, { codeGenerator, logger -> KoinProcessor(codeGenerator, logger)}) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
@@ -34,12 +35,13 @@ class KoinTests {
 
         val mediatorClassName = "Mediator__Impl"
         val mediatorInterface = "interfaces.Mediator"
-        val handlerCode = generatedCode.last()
-        assert(handlerCode.contains("package mediaktorKoin"))
-        assert(handlerCode.contains("fun Module.provideMediator()"))
-        assert(handlerCode.contains("singleOf(::Handler__${handlerOneName}__1)"))
-        assert(handlerCode.contains("factoryOf(::Handler__${handlerTwoName}__2)"))
-        assert(handlerCode.contains("single { params -> $mediatorClassName"))
-        assert(handlerCode.contains("bind $mediatorInterface::class"))
+        val diCode = generatedCode.last()
+        println(diCode)
+        assert(diCode.contains("package mediaktorKoin"))
+        assert(diCode.contains("fun Module.provideMediator()"))
+        assert(diCode.contains("singleOf(::Handler__${handlerOneName}__1)"))
+        assert(diCode.contains("factoryOf(::Handler__${handlerTwoName}__2)"))
+        assert(diCode.contains("single { params -> $mediatorClassName"))
+        assert(diCode.contains("bind $mediatorInterface::class"))
     }
 }

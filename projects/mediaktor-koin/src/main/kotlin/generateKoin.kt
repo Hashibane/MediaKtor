@@ -12,7 +12,7 @@ fun CodeGenerator.generateKoin(handlers: List<HandlerType>, mediator: ClassName)
     val configName = "provideMediator"
 
     val dependencyConfig = FunSpec.builder(configName)
-        .receiver(Module::class)
+        .receiver(ClassName("org.koin.core.module", "Module"))
 
     val singleOf = MemberName("org.koin.core.module.dsl", "singleOf")
     val single = ClassName("org.koin.core.module", "Module")

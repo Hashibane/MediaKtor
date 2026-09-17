@@ -20,10 +20,8 @@ enum class NotificationParallel {
  * PASS pipelines are always applied after the STRICT pipelines according to order value.
  */
 enum class PipelineTarget(val isStrict: Boolean) {
-    STRICT_REQUESTS(true),
-    STRICT_NOTIFICATIONS(true),
-    STRICT_BOTH(true),
-    PASS_REQUESTS(false),
-    PASS_NOTIFICATIONS(false),
-    PASS_BOTH(false)
+    REQUEST_MATCH(true),
+    REQUESTS(false),
+    NOTIFICATIONS(false),
+    BOTH(false)
 }

@@ -15,7 +15,6 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.ParameterSpec
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.ksp.toTypeName
-import com.squareup.kotlinpoet.ksp.toTypeVariableName
 import errors.PreprocessingException
 import metadata.HandlerDescriptor
 import metadata.HandlerMetadata
@@ -175,15 +174,14 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
 
 
                 val pipelineTarget = when (target) {
-                    "PipelineTarget.STRICT_REQUESTS" -> PipelineTarget.STRICT_REQUESTS
-                    "PipelineTarget.STRICT_NOTIFICATIONS" -> PipelineTarget.STRICT_NOTIFICATIONS
-                    "PipelineTarget.STRICT_BOTH" -> PipelineTarget.STRICT_BOTH
-                    "PipelineTarget.PASS_REQUESTS" -> PipelineTarget.PASS_REQUESTS
-                    "PipelineTarget.PASS_NOTIFICATIONS" -> PipelineTarget.PASS_NOTIFICATIONS
-                    "PipelineTarget.PASS_BOTH" -> PipelineTarget.PASS_BOTH
+                    "PipelineTarget.${PipelineTarget.REQUEST_MATCH}" -> PipelineTarget.REQUEST_MATCH
+                    "PipelineTarget.${PipelineTarget.REQUESTS}" -> PipelineTarget.REQUESTS
+                    "PipelineTarget.${PipelineTarget.NOTIFICATIONS}" -> PipelineTarget.NOTIFICATIONS
+                    "PipelineTarget.${PipelineTarget.BOTH}" -> PipelineTarget.BOTH
                     else -> throw PreprocessingException(
                         "Unknown target specifier $target on" +
-                                " pipeline function $functionName. Expected REQUESTS, NOTIFICATIONS or BOTH.")
+                                " pipeline function $functionName. Expected ${PipelineTarget.REQUEST_MATCH}, " +
+                                "${PipelineTarget.REQUESTS}, ${PipelineTarget.NOTIFICATIONS} or ${PipelineTarget.BOTH}.")
                 }
 
                 verifyPipeline(

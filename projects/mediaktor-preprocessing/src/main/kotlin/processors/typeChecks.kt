@@ -9,15 +9,17 @@ import errors.PreprocessingException
 fun verifyPipeline(functionName: String, nextReturn: TypeName, returnType: TypeName, target: PipelineTarget) {
 
     val any = ANY.copy(nullable = true)
-    if (!target.isStrict && (returnType != any || nextReturn != any)) {
-        throw PreprocessingException("Pipeline $functionName has target PASS.\n" +
-                "It must return Any? and the \"next\" must return Any?. " +
-                "For strict return type matching use STRICT targets.")
+    val isPassNotifications = target == PipelineTarget.NOTIFICATIONS
+
+    if (isPassNotifications && (returnType != UNIT || nextReturn != any)) {
+        throw PreprocessingException("Pipeline $functionName has target $target is applied to notifications." +
+                "It must return Unit. The \"next\" parameter should be of type suspend () -> Any?." +
+                "Current return type: $returnType, \"next\" return: $nextReturn")
     }
 
-    if (returnType != UNIT &&
-        (target == PipelineTarget.STRICT_BOTH || target == PipelineTarget.STRICT_NOTIFICATIONS)) {
-        throw PreprocessingException("Pipeline $functionName has target $target and can be applied to notifications." +
-                "It must return Unit. To pass the return use PASS targets.")
+    if (!target.isStrict && (nextReturn != any || returnType != any && !isPassNotifications)) {
+        throw PreprocessingException("Pipeline $functionName has target PASS.\n" +
+                "It must return Any? and the \"next\" must return Any?. " +
+                "For strict return type matching use STRICT target.")
     }
 }

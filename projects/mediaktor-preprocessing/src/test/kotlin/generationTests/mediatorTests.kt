@@ -195,7 +195,6 @@ class MediatorTests {
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
         assert(mediatorCode.contains("is $inputOneClass ->"))
-        println(mediatorCode)
         assert(
             mediatorCode.contains(
                 """is TestInputClass1 -> {
@@ -280,7 +279,6 @@ class MediatorTests {
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
         assert(mediatorCode.contains("is $inputOneClass ->"))
         assert(mediatorCode.contains("is $inputTwoClass ->"))
-        println(mediatorCode)
         assert(mediatorCode.contains("handler__${handlerOneName.lowercase()}__1().handleRequest(notification)"))
         assert(mediatorCode.contains("handler__${handlerTwoName.lowercase()}__2().handleRequest(notification)"))
         assert(
@@ -567,7 +565,7 @@ class MediatorTests {
         val pipelineOne = functionDeclaration {
             setupHandler(
                 pipelineOneName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.STRICT_REQUESTS)
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.REQUEST_MATCH)
             )
 
             parameter {
@@ -617,7 +615,7 @@ class MediatorTests {
         val pipelineTwo = functionDeclaration {
             setupHandler(
                 pipelineTwoName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.STRICT_REQUESTS)
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.REQUEST_MATCH)
             )
 
             parameter {
@@ -667,7 +665,7 @@ class MediatorTests {
         val pipelineThree = functionDeclaration {
             setupHandler(
                 pipelineThreeName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 1, PipelineTarget.STRICT_REQUESTS)
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 1, PipelineTarget.REQUEST_MATCH)
             )
 
             parameter {
@@ -720,7 +718,7 @@ class MediatorTests {
                 additionalData = PipelineMetadata(
                     mockkClass(TypeName::class),
                     Int.MIN_VALUE,
-                    PipelineTarget.STRICT_REQUESTS
+                    PipelineTarget.REQUEST_MATCH
                 )
             )
 
@@ -801,7 +799,6 @@ class MediatorTests {
         assert(mediatorCode.contains("is $inputThreeType ->"))
         assert(mediatorCode.contains("is $inputFourType ->"))
 
-        println(mediatorCode)
         assert(
             mediatorCode.contains(
                 """is InputType1 -> {
@@ -898,13 +895,13 @@ class MediatorTests {
 
     output:
        invoke()
-           is InputType1 -> pl1 pl4 rq1
-           is InputType1? -> pl2 pl3 rq2
-           is InputType2 -> pl4 rq3
-           is InputType2? -> pl4 rq4
+           is InputType1 -> pl1 pl3 pl4 rq1
+           is InputType2 -> pl2 pl3 rq2
+           is InputType3 -> pl3 pl4 rq3
+           is InputType4 -> pl3 pl4 rq4
        publish()
-           is InputType1? -> pl3 pl5 nf1
-           is InputType2? -> pl3 nf2
+           is InputType2 -> pl3 pl5 nf1
+           is InputType4 -> pl3 nf2
     */
     @Test
     fun `multiple pipeline behaviors with complex type hierarchy and notification handlers`() {
@@ -1108,11 +1105,22 @@ class MediatorTests {
 
         // -- pipelines
 
+        val anyReturnType: KSTypeReference.() -> Unit = {
+            type {
+                nullability { Nullability.NULLABLE }
+                classDeclaration {
+                    packageName { "kotlin" }
+                    qualifiedName { "kotlin.Any" }
+                    classKind { ClassKind.CLASS }
+                }
+            }
+        }
+
         val pipelineOneName = "pipelineOne"
         val pipelineOne = functionDeclaration {
             setupHandler(
                 pipelineOneName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.STRICT_REQUESTS)
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.REQUEST_MATCH)
             )
 
             parameter {
@@ -1163,7 +1171,7 @@ class MediatorTests {
         val pipelineTwo = functionDeclaration {
             setupHandler(
                 pipelineTwoName,
-                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.STRICT_REQUESTS)
+                additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.REQUEST_MATCH)
             )
 
             parameter {
@@ -1214,7 +1222,7 @@ class MediatorTests {
             setupHandler(
                 pipelineThreeName, additionalData = PipelineMetadata(
                     mockkClass(TypeName::class), 1,
-                    PipelineTarget.STRICT_BOTH
+                    PipelineTarget.BOTH
                 )
             )
 
@@ -1238,7 +1246,7 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                unitReturnType()
+                                anyReturnType()
                             }
                         }
 
@@ -1249,7 +1257,7 @@ class MediatorTests {
                             }
 
                             returnType {
-                                unitReturnType()
+                                anyReturnType()
                             }
                         }
                     }
@@ -1258,7 +1266,7 @@ class MediatorTests {
             }
 
             returnType {
-                unitReturnType()
+                anyReturnType()
             }
         }
 
@@ -1267,7 +1275,7 @@ class MediatorTests {
             setupHandler(
                 pipelineFourName, additionalData = PipelineMetadata(
                     mockkClass(TypeName::class),
-                    Int.MIN_VALUE, PipelineTarget.STRICT_REQUESTS
+                    Int.MIN_VALUE, PipelineTarget.REQUEST_MATCH
                 )
             )
 
@@ -1319,7 +1327,7 @@ class MediatorTests {
             setupHandler(
                 pipelineFiveName, additionalData = PipelineMetadata(
                     mockkClass(TypeName::class),
-                    Int.MIN_VALUE, PipelineTarget.STRICT_NOTIFICATIONS
+                    Int.MIN_VALUE, PipelineTarget.NOTIFICATIONS
                 )
             )
 
@@ -1343,7 +1351,7 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                unitReturnType()
+                                anyReturnType()
                             }
                         }
 
@@ -1353,7 +1361,7 @@ class MediatorTests {
                             }
 
                             returnType {
-                                unitReturnType()
+                                anyReturnType()
                             }
                         }
                     }
@@ -1409,11 +1417,12 @@ class MediatorTests {
         assert(mediatorCode.contains("is $inputFourType ->"))
 
         assert(
-            mediatorCode.contains(
-                """is $inputOneType -> {
-      handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
-        handler__${pipelineOneName.lowercase()}__7().handleRequest(message) {
-          handler__${handlerOneName.lowercase()}__1().handleRequest(message)
+            mediatorCode.contains("""is $inputOneType -> {
+      handler__${pipelineThreeName.lowercase()}__9().handleRequest(message) {
+        handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
+          handler__${pipelineOneName.lowercase()}__7().handleRequest(message) {
+            handler__${handlerOneName.lowercase()}__1().handleRequest(message)
+          }
         }
       }
     }""".trimMargin()
@@ -1422,10 +1431,11 @@ class MediatorTests {
 
 
         assert(
-            mediatorCode.contains(
-                """is $inputThreeType -> {
-      handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
-        handler__${handlerThreeName.lowercase()}__3().handleRequest(message)
+            mediatorCode.contains("""is $inputThreeType -> {
+      handler__${pipelineThreeName.lowercase()}__9().handleRequest(message) {
+        handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
+          handler__${handlerThreeName.lowercase()}__3().handleRequest(message)
+        }
       }
     }""".trimMargin()
             )
@@ -1444,10 +1454,11 @@ class MediatorTests {
         )
 
         assert(
-            mediatorCode.contains(
-                """is $inputFourType -> {
-      handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
-        handler__${handlerFourName.lowercase()}__4().handleRequest(message)
+            mediatorCode.contains("""is $inputFourType -> {
+      handler__${pipelineThreeName.lowercase()}__9().handleRequest(message) {
+        handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
+          handler__${handlerFourName.lowercase()}__4().handleRequest(message)
+        }
       }
     }""".trimMargin()
             )
@@ -1521,13 +1532,13 @@ class MediatorTests {
        nf1 -> NotificationHandler(paramPackage.InputType1)
        nf2 -> NotificationHandler(paramPackage.InputType2)
 
-       pl3 -> PipelineBehavior(paramPackage.InputType2): Any? (PASS_REQUESTS)
-       pl2 -> PipelineBehaviour(paramPackage.InputType2): Unit (STRICT_BOTH)
-       pl1 -> PipelineBehavior(paramPackage.InputType1): Any? (PASS_BOTH)
+       pl3 -> PipelineBehavior(paramPackage.InputType2): Any? (REQUESTS)
+       pl2 -> PipelineBehaviour(paramPackage.InputType2): Any? (BOTH)
+       pl1 -> PipelineBehavior(paramPackage.InputType1): Any? (BOTH)
 
     output:
        invoke()
-           is InputType1 -> pl1 pl3 rq1
+           is InputType1 -> pl1 pl2 pl3 rq1
            is InputType2 -> pl2 pl3 rq2
 
        publish()
@@ -1682,7 +1693,7 @@ class MediatorTests {
             setupHandler(
                 pipelineOneName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 0,
-                    PipelineTarget.PASS_BOTH)
+                    PipelineTarget.BOTH)
             )
 
             parameter {
@@ -1733,7 +1744,7 @@ class MediatorTests {
             setupHandler(
                 pipelineTwoName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 2,
-                    PipelineTarget.STRICT_BOTH)
+                    PipelineTarget.BOTH)
             )
 
             parameter {
@@ -1756,7 +1767,7 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                unitReturnType()
+                                anyReturnType()
                             }
                         }
 
@@ -1766,7 +1777,7 @@ class MediatorTests {
                             }
 
                             returnType {
-                                unitReturnType()
+                                anyReturnType()
                             }
                         }
                     }
@@ -1775,7 +1786,7 @@ class MediatorTests {
             }
 
             returnType {
-                unitReturnType()
+                anyReturnType()
             }
         }
 
@@ -1784,7 +1795,7 @@ class MediatorTests {
             setupHandler(
                 pipelineThreeName, additionalData = PipelineMetadata(
                     mockkClass(TypeName::class), 1,
-                    PipelineTarget.PASS_REQUESTS
+                    PipelineTarget.REQUESTS
                 )
             )
 
@@ -1851,7 +1862,6 @@ class MediatorTests {
         }
 
         val mediatorCode = generatedCode.drop(2).first()
-        println(mediatorCode)
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend fun send"))
         assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
@@ -1865,11 +1875,12 @@ class MediatorTests {
         assert(mediatorCode.contains("is $inputTwoType ->"))
 
         assert(
-            mediatorCode.contains(
-                """is $inputOneType -> {
+            mediatorCode.contains("""is $inputOneType -> {
       handler__${pipelineOneName.lowercase()}__5().handleRequest(message) {
         handler__${pipelineThreeName.lowercase()}__7().handleRequest(message) {
-          handler__${handlerOneName.lowercase()}__1().handleRequest(message)
+          handler__${pipelineTwoName.lowercase()}__6().handleRequest(message) {
+            handler__${handlerOneName.lowercase()}__1().handleRequest(message)
+          }
         }
       }
     }""".trimMargin()

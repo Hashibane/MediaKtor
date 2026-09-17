@@ -55,26 +55,26 @@ suspend fun pipelineOne(arg: Any, next: suspend () -> Any?): Any? {
     return next()
 }
 
-@PipelineBehavior(order = 4,target = PipelineTarget.STRICT_NOTIFICATIONS)
-suspend fun pipelineTwo(arg: Type1, next: suspend () -> Unit): Unit {
+@PipelineBehavior(order = 4,target = PipelineTarget.NOTIFICATIONS)
+suspend fun pipelineTwo(arg: Type1, next: suspend () -> Any?) {
     eventQueue.add("pipelineTwo")
     next()
 }
 
-@PipelineBehavior(order = 3, target = PipelineTarget.STRICT_NOTIFICATIONS)
-suspend fun pipelineThree(arg: Type2, next: suspend () -> Unit): Unit {
+@PipelineBehavior(order = 3, target = PipelineTarget.NOTIFICATIONS)
+suspend fun pipelineThree(arg: Type2, next: suspend () -> Any?) {
     eventQueue.add("pipelineThree")
     next()
 }
 
-@PipelineBehavior(order = 2, target = PipelineTarget.STRICT_NOTIFICATIONS)
-suspend fun pipelineFour(arg: Type3, next: suspend () -> Unit): Unit {
+@PipelineBehavior(order = 2, target = PipelineTarget.NOTIFICATIONS)
+suspend fun pipelineFour(arg: Type3, next: suspend () -> Any?) {
     eventQueue.add("pipelineFour")
     next()
 }
 
-@PipelineBehavior(order = 1, target = PipelineTarget.STRICT_NOTIFICATIONS)
-suspend fun pipelineFive(arg: Type4, next: suspend () -> Unit): Unit {
+@PipelineBehavior(order = 1, target = PipelineTarget.NOTIFICATIONS)
+suspend fun pipelineFive(arg: Type4, next: suspend () -> Any?) {
     eventQueue.add("pipelineFive")
     next()
 }

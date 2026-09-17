@@ -99,10 +99,9 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
 
         requestHandlers.forEach { requestHandler ->
             for (handler in pipelineCache[type]!!.filter {
-                it.pipelineMetadata.target == PipelineTarget.STRICT_REQUESTS ||
-                        it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH ||
-                        it.pipelineMetadata.target == PipelineTarget.PASS_REQUESTS ||
-                        it.pipelineMetadata.target == PipelineTarget.PASS_BOTH
+                it.pipelineMetadata.target == PipelineTarget.REQUEST_MATCH ||
+                        it.pipelineMetadata.target == PipelineTarget.REQUESTS ||
+                        it.pipelineMetadata.target == PipelineTarget.BOTH
             }) {
                 val handlerReturn = requestHandler.handlerMetadata.returnType
 
@@ -136,10 +135,8 @@ fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerTy
 
         if (notificationHandlers.isNotEmpty()) {
             for (handler in pipelineCache[type]!!.filter {
-                it.pipelineMetadata.target == PipelineTarget.STRICT_NOTIFICATIONS ||
-                        it.pipelineMetadata.target == PipelineTarget.STRICT_BOTH ||
-                        it.pipelineMetadata.target == PipelineTarget.PASS_NOTIFICATIONS ||
-                        it.pipelineMetadata.target == PipelineTarget.PASS_BOTH
+                    it.pipelineMetadata.target == PipelineTarget.NOTIFICATIONS ||
+                    it.pipelineMetadata.target == PipelineTarget.BOTH
             }) {
                 val propName = handler.handlerMetadata.generatedClass.simpleName.lowercase()
                 publishBuilder.beginControlFlow("%L().handleRequest(%L)", propName, notificationParameterName)

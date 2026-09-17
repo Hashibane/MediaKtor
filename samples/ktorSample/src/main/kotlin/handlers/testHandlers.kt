@@ -28,8 +28,8 @@ fun notifierTwo(arg: Request, logger: Logger) {
 }
 
  
-@PipelineBehavior(order = 5, target = PipelineTarget.STRICT_NOTIFICATIONS)
-suspend fun verify(arg: Request, next: suspend () -> Unit) {
+@PipelineBehavior(order = 5, target = PipelineTarget.NOTIFICATIONS)
+suspend fun verify(arg: Request, next: suspend () -> Any?) {
     if (arg.content.contains("OK")) {
         next()
     } else {
@@ -37,7 +37,7 @@ suspend fun verify(arg: Request, next: suspend () -> Unit) {
     }
 }
 
-@PipelineBehavior(target = PipelineTarget.PASS_BOTH)
+@PipelineBehavior(target = PipelineTarget.BOTH)
 suspend fun logAll(arg: Request, logger: Logger, next: suspend () -> Any?): Any? {
     logger.info("Logger received request with content: ${arg.content}")
     return next()

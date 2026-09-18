@@ -84,9 +84,7 @@ fun main() {
 ### Message types
 
 Different from other implementations, there is no dedicated Message or Notification type. You may use any non-nullable
-type as your request type. 
-
-The first argument of a handler function is called the request type of the handler.
+type as your request type.
 
 ### Handler types
 
@@ -96,19 +94,19 @@ Handlers are implemented through annotations. This means any function annotated 
  - ```@NotificationHandler```
  - ```@PipelineBehavior```
 
-| Handler               | Calls on request | Returns     | Dispatched with                           |
-|-----------------------|------------------|-------------|-------------------------------------------|
-| `RequestHandler`      | exactly one      | `T`         | `mediator.send()`                         |
-| `NotificationHandler` | one or more      | Unit        | `mediator.publish()`                      |
-| `PipelineBehavior`    | zero or more     | Any? or `T` | `mediator.send()` or `mediator.publish()` | (see options)
+| Handler               | Calls on request | Returns       | Dispatched with                           |
+|-----------------------|------------------|---------------|-------------------------------------------|
+| `RequestHandler`      | exactly one      | `T`           | `mediator.send()`                         |
+| `NotificationHandler` | one or more      | `Unit`        | `mediator.publish()`                      |
+| `PipelineBehavior`    | zero or more     | `Any?` or `T` | `mediator.send()` or `mediator.publish()` |
+
+Every handler has also config options. PipelineBehavior types depend on their `target`.
 
 > [!IMPORTANT]
 > By convention, the first argument of annotated function must be the actual request and all others are dependencies injected
 > on a function call. Using a DI framework to resolve dependencies is a preferred method.
 
-If no corresponding handlers request type is found for the request, IllegalArgumentException is thrown.
-
-Every handler has also config options.
+If no corresponding handlers request type is found for the request, `IllegalArgumentException` is thrown.
 
 ### Request Handlers
 
@@ -138,7 +136,7 @@ fun sendMessage(message: Request) {
 
 Notification handlers are functions annotated with ```@NotificationHandler```. Similarly to request handlers, they
 respond to an exact (sub)type of the message. For any given type, there may be any number of notification handlers. The return
-type must always be Unit. Notifications are published via mediators ```publish()``` method. `
+type must always be `Unit`. Notifications are published via mediators ```publish()``` method.
 
 #### Example
 ```kotlin
@@ -166,8 +164,6 @@ fun publishNotification(notification: Request) {
 Pipeline behaviors are functions annotated with ```@PipelineBehavior```. All pipelines must contain the `next` parameter
 with type `suspend () -> <HandlerReturnType or Any?>` depending on the pipeline target. All pipelines
 must be `suspend` functions.
-
-If a strict pipeline does not match the return type but matches the request type, it is not applied and a warning is emitted.
 
 #### Example
 
@@ -253,12 +249,14 @@ fun publishNotification(notification: Request = RequestSubtype("subtype!")) {
   Specifies target for the pipeline. Every pipeline must have return type and "next" parameter type chosen according
   to their target.
 
-  | Target           | Applied to                                               | Return type                        | `next` type                     |
-  |------------------|----------------------------------------------------------|------------------------------------|---------------------------------|
-  | `REQUESTS_MATCH` | Request handlers that match request and return type      | Request handlers return type [`T`] | ```kotlin suspend () -> T```    |
-  | `REQUEST`        | Request handlers that match request type                 | Any?                               | ```kotlin suspend () -> Any?``` |
-  | `NOTIFICATIONS`  | Notification handlers                                    | Unit                               | ```kotlin suspend () -> Unit``` | 
-  | `BOTH`           | Notification or request handlers that match request type | Any?                               | ```kotlin suspend () -> Any?``` |
+  | Target           | Applied to                                               | Return type                        | `next` type              |
+  |------------------|----------------------------------------------------------|------------------------------------|--------------------------|
+  | `REQUESTS_MATCH` | Request handlers that match request and return type      | Request handlers return type [`T`] | ```suspend () -> T```    |
+  | `REQUEST`        | Request handlers that match request type                 | `Any?`                             | ```suspend () -> Any?``` |
+  | `NOTIFICATIONS`  | Notification handlers                                    | `Unit`                             | ```suspend () -> Unit``` | 
+  | `BOTH`           | Notification or request handlers that match request type | `Any?`                             | ```suspend () -> Any?``` |
+
+If a `REQUEST_MATCH` pipeline does not match the return type but matches the request type, it is not applied and a warning is emitted.
 
 ### Koin integration
 
@@ -287,6 +285,7 @@ then you will be able to inject mediator via `Mediator` interface.
 Pipelines are generally not meant to care about what the next parameter will return. If not needed, you should pass
 the `next()` result to the return as is or wrapped. If you need to check for the returned type or modify it, you
 should use `REQEST_MATCH` target.
+
 
 Using MediaKtor with DI framework is the recommended way. Otherwise, you will need to track handler classes manually and
 handle implementation details that are otherwise hidden.

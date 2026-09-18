@@ -21,35 +21,72 @@ TODO
 Include plugin KSP in your `build.gradle.kts`:
 ```kotlin
 plugins {
-    ...
-    id("com.google.devtools.ksp") version <KSP version>
+    // ...
+    id("com.google.devtools.ksp") version "2.3.11" // or other
 }
 ```
 
-and `mediaktor-preprocessing`, `mediaktor-core`, `koin` dependencies: 
+and `mediaktor-core` and one of the DI framework extensions in dependencies:
 
 ```kotlin
 dependencies {
-    implementation("com.hashibane:mediaktor-core:0.0.0")
-    ksp("com.hashibane:mediaktor-preprocessing:0.0.0")
+    // ...
+    
+    val version = "<Current Version>"
+    implementation("com.hashibane:mediaktor-core:$version")
+
+    // for no DI framework
+    ksp("com.hashibane:mediaktor-bare:$version")
+
+    // for koin
+    ksp("com.hashibane:mediaktor-koin:$version")
+    implementation("com.hashibane:mediaktor-koin:$version")
     
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core) // or other corresponding koin platform
 }
 ```
 
-## Quickstart
+## Quickstart with Koin
+
+> [!NOTE]
+> For a bigger sample look at samples/ktorSample
 
 ```kotlin
+class DBConnection(val connectionString: String)
 
+@RequestHandler
+fun intToString(arg: Int, connection: DBConnection): String {
+    println("Connecting to database: ${connection.connectionString}")
+    return arg.toString()
+}
+
+fun main() {
+    val appModule = module {
+        // Your handler dependencies - loggers, database connections etc. that are required for handlers/pipelines
+        single { DBConnection("<SomeUrl>") }
+
+        provideMediator()
+    }
+
+    startKoin {
+        modules(appModule)
+    }
+
+    val mediator: Mediator = get()
+    
+    println(mediator.send(1234))
+}
 ```
 
 ## Usage
 
 ### Message types
 
-Different from other implementations there is no dedicated Message or Notification type. You may use any non-nullable
+Different from other implementations, there is no dedicated Message or Notification type. You may use any non-nullable
 type as your request type. 
+
+The first argument of a handler function is called the request type of the handler.
 
 ### Handler types
 
@@ -71,51 +108,14 @@ Handlers are implemented through annotations. This means any function annotated 
 
 If no corresponding handlers request type is found for the request, IllegalArgumentException is thrown.
 
-Every handler has also config options. 
-
-### Handler options
-
-#### General options
-
-- Lifespan 
-    Handlers are singletons (`SINGLE`) by default. You can also specify `FACTORY` to create new handler every call.
-
-#### Notification handlers
-
-- Order
-    You may specify which notification handler goes first with the order parameter. The lower the value, the earlier
-    the handler is called. For example handler with order value 0 gets called before handler with order 1.
-- Parallelism
-    Notifications are called inside ```launch {}``` and run in parallel. If you specify `SEQUENTIAL` value for parallel, the
-    handler gets called like ordinary function.
-
-#### Pipeline Handlers
-
-- Order
-    Works the same like notification handlers order. `PASS` pipelines are always applied first regardless of pipeline order.
-- Target
-    Specifies target for the pipeline. `PASS` targets return Any? type, because they are meant to pass return type of the
-    next parameter. `STRICT` targets return same type as underlying handlers.
-
-    There are two types of pipelines based on matching of the request type.
-    For strict matching the return type of any given handler exactly as is - ```STRICT```, or
-    for just passing the return value - ```PASS```. You may apply pipelines selectively to notifications or requests and
-    specify their strictness by ```target```. In total there are six targets:
-
-    | Target                 | Applied to                                                                            | Request type                       | Return type                  |
-    |------------------------|---------------------------------------------------------------------------------------|------------------------------------|------------------------------|
-    | `STRICT_REQUESTS`      | Request handlers that match request and return type                                   | Request handlers request type      | Request handlers return type |
-    | `PASS_REQUEST`         | Request handlers that match request type                                              | Request handlers request type      | Any?                         |
-    | `PASS_NOTIFICATIONS`   | Notification handlers that match request type                                         | Notification handlers request type | Any?                         |
-    | `PASS_BOTH`            | Notification or request handlers that match request type                              | Handlers request type              | Any?                         |
-
+Every handler has also config options.
 
 ### Request Handlers
 
-Request handlers are functions annotated with ```@RequestHandler```. 
+Request handlers are functions annotated with ```@RequestHandler```.
 
 Request handler will respond only if a request type (or subtype) matches the message type sent from the mediator
-and may return any given type. There may only be one request handler for any given type. Requests are sent
+and may return any given type. There may only be one request handler for any given request type. Requests are sent
 via mediators ```send()``` method.
 
 #### Example
@@ -129,7 +129,7 @@ fun requestOne(arg: Request, logger: Logger): String {
 }
 
 fun sendMessage(message: Request) {
-    val mediator by inject<Mediator>() // in Koin
+    val mediator: Mediator = get() // in Koin
     val response = mediator.send(message)
 }
 ```
@@ -137,10 +137,8 @@ fun sendMessage(message: Request) {
 ### Notification Handlers
 
 Notification handlers are functions annotated with ```@NotificationHandler```. Similarly to request handlers, they
-respond to exact (sub)type of the message. For any given type, there may be any number of notification handlers. The return
+respond to an exact (sub)type of the message. For any given type, there may be any number of notification handlers. The return
 type must always be Unit. Notifications are published via mediators ```publish()``` method. `
-
-Notifications are run in order and can be run parallelly (the default). For details check out options ---LINK---.
 
 #### Example
 ```kotlin
@@ -158,7 +156,7 @@ fun notifierTwo(arg: Request, logger: Logger) {
 }
 
 fun publishNotification(notification: Request) {
-    val mediator by inject<Mediator>() // in Koin
+    val mediator: Mediator = get() // in Koin
     val response = mediator.publish(message)
 }
 ```
@@ -167,11 +165,9 @@ fun publishNotification(notification: Request) {
 
 Pipeline behaviors are functions annotated with ```@PipelineBehavior```. All pipelines must contain the `next` parameter
 with type `suspend () -> <HandlerReturnType or Any?>` depending on the pipeline target. All pipelines
-must be suspend functions.
+must be `suspend` functions.
 
-Pipelines are ordered according to their order value and target (---see options---)
-
-If a strict pipeline does not match the return type but matches the request type it is not applied and a warning is emitted.
+If a strict pipeline does not match the return type but matches the request type, it is not applied and a warning is emitted.
 
 #### Example
 
@@ -193,7 +189,7 @@ fun notifierOne(arg: Request, logger: Logger) {
 }
 
 fun publishNotification(notification: Request) {
-    val mediator by inject<Mediator>() // in Koin
+    val mediator: Mediator = get() // in Koin
     val response = mediator.publish(message)
 }
 ```
@@ -201,7 +197,7 @@ fun publishNotification(notification: Request) {
 ### Request type inheritance
 
 If you register a type, then mediator calls the most specific handler (request or notification) 
-for given type. A handler will handle its requests subtypes if there is no handler that would handle them.
+for a given type. A handler will handle its requests subtypes if there is no handler that would handle them.
 A pipeline will also intercept any calls that involve its request subtype.
 
 #### Example
@@ -230,6 +226,40 @@ fun publishNotification(notification: Request = RequestSubtype("subtype!")) {
 }
 ```
 
+### Handler options
+
+#### General options
+
+- Lifespan
+  Handlers are singletons (`SINGLE`) by default. You can also specify `FACTORY` to create new handler every call.
+  Lifespan does not matter when using `mediaktor-bare`.
+
+#### Notification handlers
+
+- Order
+  You may specify which notification handler goes first with the order parameter. The lower the value, the earlier
+  the handler is called. For example, handler with order value 0 gets called before handler with order 1. The default
+  order is `Int.MIN_VALUE` (outermost possible).
+- Parallelism
+  Notifications calls are wrapped inside `launch {}` and by default run in parallel.
+  If you specify `SEQUENTIAL` value for `parallel` parameter, the handler gets called without the `launch {}`.
+
+#### Pipeline Handlers
+
+- Order
+  Works the same as notification handlers order. `REQUEST_MATCH` pipelines are applied strictly after any other pipelines, but
+  they respect order value between eachother. Default value is `INT.MIN_VALUE`.
+- Target
+  Specifies target for the pipeline. Every pipeline must have return type and "next" parameter type chosen according
+  to their target.
+
+  | Target           | Applied to                                               | Return type                        | `next` type                     |
+  |------------------|----------------------------------------------------------|------------------------------------|---------------------------------|
+  | `REQUESTS_MATCH` | Request handlers that match request and return type      | Request handlers return type [`T`] | ```kotlin suspend () -> T```    |
+  | `REQUEST`        | Request handlers that match request type                 | Any?                               | ```kotlin suspend () -> Any?``` |
+  | `NOTIFICATIONS`  | Notification handlers                                    | Unit                               | ```kotlin suspend () -> Unit``` | 
+  | `BOTH`           | Notification or request handlers that match request type | Any?                               | ```kotlin suspend () -> Any?``` |
+
 ### Koin integration
 
 To automatically inject all required dependencies, declare a Koin module and call 
@@ -249,3 +279,14 @@ install(Koin) {
     modules(appModule)
 }
 ```
+
+then you will be able to inject mediator via `Mediator` interface.
+
+### Usage tips
+
+Pipelines are generally not meant to care about what the next parameter will return. If not needed, you should pass
+the `next()` result to the return as is or wrapped. If you need to check for the returned type or modify it, you
+should use `REQEST_MATCH` target.
+
+Using MediaKtor with DI framework is the recommended way. Otherwise, you will need to track handler classes manually and
+handle implementation details that are otherwise hidden.

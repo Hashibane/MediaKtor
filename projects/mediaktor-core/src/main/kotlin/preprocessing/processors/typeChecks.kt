@@ -11,17 +11,17 @@ fun verifyPipeline(functionName: String, nextReturn: TypeName, returnType: TypeN
     val any = ANY.copy(nullable = true)
     val isPassNotifications = target == PipelineTarget.NOTIFICATIONS
 
-    if (isPassNotifications && (returnType != UNIT || nextReturn != any)) {
+    if (isPassNotifications && (returnType != UNIT || nextReturn != UNIT)) {
         throw PreprocessingException(
             "Pipeline $functionName has target $target is applied to notifications." +
-                    "It must return Unit. The \"next\" parameter should be of type suspend () -> Any?." +
+                    "It must return Unit. The \"next\" parameter should be of type suspend () -> Unit." +
                     "Current return type: $returnType, \"next\" return: $nextReturn"
         )
     }
 
-    if (!target.isStrict && (nextReturn != any || returnType != any && !isPassNotifications)) {
-        throw PreprocessingException("Pipeline $functionName has target PASS.\n" +
-                "It must return Any? and the \"next\" must return Any?. " +
+    if (!target.isStrict && !isPassNotifications && (nextReturn != any || returnType != any)) {
+        throw PreprocessingException("Pipeline $functionName.\n" +
+                " must return Any? and the \"next\" must return Any?. " +
                 "For strict return type matching use STRICT target.")
     }
 }

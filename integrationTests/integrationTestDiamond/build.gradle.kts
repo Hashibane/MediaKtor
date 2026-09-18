@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     testImplementation(kotlin("test"))
+    testImplementation(project(":projects:mediaktor-koin"))
     kspTest(project(":projects:mediaktor-koin"))
     testImplementation(project(":projects:mediaktor-core"))
     testImplementation(platform(libs.koin.bom))

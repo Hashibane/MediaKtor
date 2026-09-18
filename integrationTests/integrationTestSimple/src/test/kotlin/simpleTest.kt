@@ -14,6 +14,5 @@ class IntegrationTests {
         runBlocking {
             assert(mediator.send(4) == "4")
         }
-
     }
 }

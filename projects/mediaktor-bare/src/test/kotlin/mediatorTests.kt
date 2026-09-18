@@ -865,11 +865,11 @@ class MediatorTests {
        nf1 -> NotificationHandler(paramPackage.InputType2)
        nf2 -> NotificationHandler(paramPackage.InputType4)
 
-       pl5 -> PipelineBehavior(paramPackage.InputType2): Unit (NOTIFICATIONS)
-       pl4 -> PipelineBehavior(paramPackage.InputType4): InputType2 (REQUESTS)
-       pl3 -> PipelineBehaviour(paramPackage.InputType4): Unit (BOTH)
-       pl2 -> PipelineBehavior(paramPackage.InputType2): Unit (REQUESTS)
-       pl1 -> PipelineBehavior(paramPackage.InputType1): InputType2 (REQUESTS)
+       pl5 -> PipelineBehavior(paramPackage.InputType2) (NOTIFICATIONS)
+       pl4 -> PipelineBehavior(paramPackage.InputType4) (REQUESTS)
+       pl3 -> PipelineBehaviour(paramPackage.InputType4) (BOTH)
+       pl2 -> PipelineBehavior(paramPackage.InputType2) (REQUESTS)
+       pl1 -> PipelineBehavior(paramPackage.InputType1) (REQUESTS)
 
     output:
        invoke()
@@ -1329,7 +1329,7 @@ class MediatorTests {
                             variance { Variance.INVARIANT }
 
                             typeRef {
-                                anyReturnType()
+                                unitReturnType()
                             }
                         }
 
@@ -1339,7 +1339,7 @@ class MediatorTests {
                             }
 
                             returnType {
-                                anyReturnType()
+                                unitReturnType()
                             }
                         }
                     }

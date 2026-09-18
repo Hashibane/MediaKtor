@@ -7,7 +7,7 @@ import com.squareup.kotlinpoet.MemberName
 import com.squareup.kotlinpoet.MemberName.Companion.member
 import preprocessing.metadata.HandlerType
 
-fun CodeGenerator.generateKoin(handlers: List<HandlerType>, mediator: ClassName): FileSpec {
+internal fun CodeGenerator.generateKoin(handlers: List<HandlerType>, mediator: ClassName): FileSpec {
 
     val configName = "provideMediator"
 

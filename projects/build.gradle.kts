@@ -6,7 +6,10 @@ plugins {
     alias(libs.plugins.nmcp)
 }
 
-subprojects {
+fun MutableSet<Project>.exclude(substring: String, body: Action<Project>) =
+    this.filter { !it.name.contains(substring) }.forEach { body(it) }
+
+subprojects.exclude("testing") {
     group = rootProject.group
     version = rootProject.version
 

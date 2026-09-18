@@ -7,9 +7,15 @@ plugins {
 
 }
 
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
 dependencies {
-    ksp(project(":projects:mediaktor-koin"))
-    implementation(project(":projects:mediaktor-core"))
+    implementation("com.hashibane:mediaktor-core:0.0.2")
+    implementation("com.hashibane:mediaktor-koin:0.0.2")
+    ksp("com.hashibane:mediaktor-koin:0.0.2")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.serialization.kotlinx.json)

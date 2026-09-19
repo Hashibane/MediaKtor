@@ -2,7 +2,7 @@
 TODO - code coverage
 
 Implementation of Mediator pattern using KSP and code generation. The project provides concise annotation-based API for
-functions with minimal overhead. It comes with out-of-the box pipeline support, notifications and Koin integration.
+functions with minimal overhead. It comes with out-of-the box pipeline support, notifications and optional Koin integration.
 
 The key differences from other mediator projects include:
 - Function-based handlers
@@ -49,9 +49,6 @@ dependencies {
 
 ## Quickstart with Koin
 
-> [!NOTE]
-> For a bigger sample look at samples/ktorSample
-
 ```kotlin
 class DBConnection(val connectionString: String)
 
@@ -78,6 +75,9 @@ fun main() {
     println(mediator.send(1234))
 }
 ```
+
+> [!NOTE]
+> For more in depth sample look at `samples/ktorSample`
 
 ## Usage
 

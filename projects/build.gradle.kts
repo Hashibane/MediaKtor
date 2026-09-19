@@ -1,5 +1,3 @@
-import org.jetbrains.dokka.DokkaDefaults.moduleName
-
 plugins {
     kotlin("jvm")
     alias(libs.plugins.dokka).apply(false)
@@ -18,6 +16,7 @@ subprojects.exclude("testing") {
         plugin("com.gradleup.nmcp")
         plugin("org.jetbrains.kotlin.jvm")
         plugin("maven-publish")
+        plugin("org.jetbrains.kotlinx.kover")
     }
 
     val dokkaHtml = tasks.named("dokkaGenerateHtml")

@@ -13,6 +13,7 @@ logback = "1.4.14"
 koin-bom = "4.1.1"
 dokka = "2.2.0"
 nmcp = "1.6.2"
+kover = "0.9.9"
 
 [libraries]
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -41,3 +42,4 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 nmcp = { id = "com.gradleup.nmcp.aggregation", version.ref = "nmcp" }
 dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
+kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

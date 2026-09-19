@@ -1,11 +1,10 @@
+import buildsrc.convention.exclude
+
 plugins {
     kotlin("jvm")
     alias(libs.plugins.dokka).apply(false)
     alias(libs.plugins.nmcp)
 }
-
-fun MutableSet<Project>.exclude(substring: String, body: Action<Project>) =
-    this.filter { !it.name.contains(substring) }.forEach { body(it) }
 
 subprojects.exclude("testing") {
     group = rootProject.group

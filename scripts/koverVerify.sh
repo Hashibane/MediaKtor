@@ -1,5 +1,6 @@
 #!/bin/sh
 
+chmod +x ../gradlew
 echo $(ls -la ..)
-chmod +x gradlew
+echo $(whoami)
 ../gradlew koverVerify

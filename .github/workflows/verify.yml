@@ -9,8 +9,6 @@ on:
 jobs:
   test-and-cov:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
     steps:
       - uses: actions/checkout@v4
@@ -25,8 +23,8 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Verify gradle wrapper
-        run: cat gradle | head
+      - name: lsla
+        run: ls -la
 
       - name: Verify with kover
-        run: ./gradle koverVerify
+        run: ./gradlew koverVerify

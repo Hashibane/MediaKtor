@@ -23,7 +23,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Execute gradlew permissions
-        run: chmod +x gradlew
+        run: sudo chmod +x gradlew
 
       - name: Kover verify
         run: cd scripts && chmod +x koverVerify.sh && ./koverVerify.sh

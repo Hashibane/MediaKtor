@@ -20,10 +20,9 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-          cache: gradle
 
-      - name: Gradlew execute permission
-        run: chmod +x gradlew
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
 
       - name: Test and generate Kover report
         run: ./gradlew koverXmlReport

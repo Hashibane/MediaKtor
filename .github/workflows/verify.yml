@@ -26,7 +26,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Verify gradle wrapper
-        run: cat gradlew | head
+        run: cat gradle | head
 
       - name: Verify with kover
-        run: ./gradlew koverVerify
+        run: ./gradle koverVerify

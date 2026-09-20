@@ -20,9 +20,13 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
+          cache: gradle
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
+
+      - name: Verify gradle wrapper
+        run: test -f ./gradlew && echo "gradle found" || echo "gradle not found"
 
       - name: Verify with kover
         run: ./gradlew koverVerify

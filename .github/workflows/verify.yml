@@ -23,7 +23,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: lsdot
-        run: ls -la ..
+        run: cd scripts && ls -la .. && cd ..
 
       - name: Kover verify
         run: cd scripts &&  chmod +x koverVerify.sh && ./koverVerify.sh

@@ -22,5 +22,5 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Build test
-        run: ./gradlew build
+      - name: Kover verify
+        run: cd scripts && ./koverVerify.sh

@@ -15,6 +15,16 @@ dependencies {
     }
 }
 
+kover {
+    reports {
+        verify {
+            rule {
+                minBound(85)
+            }
+        }
+    }
+}
+
 nmcpAggregation {
     publishAllProjectsProbablyBreakingProjectIsolation()
 }

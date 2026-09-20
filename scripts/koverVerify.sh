@@ -1,5 +1,5 @@
 #!/bin/sh
 
-echo $(ls ..)
-chmod +x koverVerify
+echo $(ls -la ..)
+chmod +x gradlew
 ../gradlew koverVerify

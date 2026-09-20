@@ -23,4 +23,4 @@ jobs:
         uses: gradle/actions/setup-gradle@v6
 
       - name: Kover verify
-        run: cd scripts && ./koverVerify.sh
+        run: cd scripts &&  chmod +x koverVerify.sh && ./koverVerify.sh

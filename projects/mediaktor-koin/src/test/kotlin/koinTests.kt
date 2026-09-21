@@ -13,13 +13,14 @@ class KoinTests {
     fun `multiple handlers test`() {
         val handlerOneName = "HandlerOne"
         val handlerTwoName = "HandlerTwo"
+        val packageName = "handlers"
 
         val funOneDecl = functionDeclaration {
-            setupHandlerLifespan(handlerOneName, HandlerLifespan.SINGLE)
+            setupHandlerLifespan(handlerOneName, packageName,HandlerLifespan.SINGLE)
         }
 
         val funTwoDecl = functionDeclaration {
-            setupHandlerLifespan(handlerTwoName, HandlerLifespan.FACTORY)
+            setupHandlerLifespan(handlerTwoName, packageName, HandlerLifespan.FACTORY)
         }
 
         val generatedCode = generateStringOutput(1, { codeGenerator, logger -> KoinProcessor(codeGenerator, logger)}) {
@@ -39,8 +40,8 @@ class KoinTests {
         println(diCode)
         assert(diCode.contains("package mediaktorKoin"))
         assert(diCode.contains("fun Module.provideMediator()"))
-        assert(diCode.contains("singleOf(::Handler__${handlerOneName}__1)"))
-        assert(diCode.contains("factoryOf(::Handler__${handlerTwoName}__2)"))
+        assert(diCode.contains("singleOf(::Handler__${packageName}__${handlerOneName})"))
+        assert(diCode.contains("factoryOf(::Handler__${packageName}__${handlerTwoName})"))
         assert(diCode.contains("single { params -> $mediatorClassName"))
         assert(diCode.contains("bind $mediatorInterface::class"))
     }

@@ -48,11 +48,12 @@ fun generateStringOutput(nHandlers: Int,
 
 
 fun KSFunctionDeclaration.setupHandler(handlerName: String,
+                                       packageName: String,
                                                 lifespan: HandlerLifespan = HandlerLifespan.SINGLE,
                                                 additionalData: AdditionalData? = null) {
-    packageName { "handlers" }
+    packageName { packageName }
     containingFile {
-        packageName { "handlers" }
+        packageName { packageName }
     }
 
     simpleName { handlerName }
@@ -153,9 +154,11 @@ fun KSFunctionDeclaration.setupHandler(handlerName: String,
 }
 
 fun KSFunctionDeclaration.setupHandlerReturn(handlerName: String,
+                                             packageName: String,
                                                       lifespan: HandlerLifespan = HandlerLifespan.SINGLE,
-                                                      notificationHandlerData: NotificationHandlerMetadata? = null) {
-    setupHandler(handlerName, lifespan, notificationHandlerData)
+                                                      notificationHandlerData: NotificationHandlerMetadata? = null,
+                                             ) {
+    setupHandler(handlerName, packageName, lifespan, notificationHandlerData)
 
     returnType {
         type {
@@ -169,9 +172,11 @@ fun KSFunctionDeclaration.setupHandlerReturn(handlerName: String,
     }
 }
 
-fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, lifespan: HandlerLifespan,
-                                                        notificationHandlerData: NotificationHandlerMetadata? = null) {
-    setupHandlerReturn(handlerName, lifespan, notificationHandlerData)
+fun KSFunctionDeclaration.setupHandlerLifespan(handlerName: String, packageName: String,
+                                                        lifespan: HandlerLifespan,
+                                                        notificationHandlerData: NotificationHandlerMetadata? = null,
+                                               ) {
+    setupHandlerReturn(handlerName, packageName, lifespan, notificationHandlerData)
 
     parameter {
         name { "first" }

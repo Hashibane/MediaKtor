@@ -79,18 +79,11 @@ abstract class HandlerProcessor(open val codeGenerator: CodeGenerator, open val 
 
     abstract fun CodeGenerator.generateDI(handlers: List<HandlerType>, mediatorClass: ClassName): FileSpec
 
-    private var _id = 0
-    val id: Int
-        get() {
-            _id += 1
-            return _id
-        }
-
     inner class RequestHandlerVisitor : KSVisitorVoid() {
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            addMetadata(handlerMetadata, function, id, HandlerDescriptor.REQUEST_HANDLER, inputTypeMetadata)
+            addMetadata(handlerMetadata, function, HandlerDescriptor.REQUEST_HANDLER, inputTypeMetadata)
         }
     }
 
@@ -98,7 +91,7 @@ abstract class HandlerProcessor(open val codeGenerator: CodeGenerator, open val 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            addMetadata(handlerMetadata, function, id, HandlerDescriptor.NOTIFICATION_HANDLER, inputTypeMetadata)
+            addMetadata(handlerMetadata, function,  HandlerDescriptor.NOTIFICATION_HANDLER, inputTypeMetadata)
         }
     }
 
@@ -106,7 +99,7 @@ abstract class HandlerProcessor(open val codeGenerator: CodeGenerator, open val 
         override fun visitFunctionDeclaration(function: KSFunctionDeclaration, data: Unit) {
             super.visitFunctionDeclaration(function, data)
 
-            addMetadata(handlerMetadata, function, id, HandlerDescriptor.PIPELINE_HANDLER, inputTypeMetadata)
+            addMetadata(handlerMetadata, function, HandlerDescriptor.PIPELINE_HANDLER, inputTypeMetadata)
         }
     }
 }

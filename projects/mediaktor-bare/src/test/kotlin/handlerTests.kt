@@ -29,9 +29,10 @@ class HandlerTests {
         val inputClass = "TestInputClass"
         val outputClass = "TestReturnClass"
         val handlerName = "testHandler"
+        val packageName = "handlers"
 
         val funDecl = functionDeclaration {
-            setupHandler(handlerName)
+            setupHandler(handlerName, packageName = packageName)
 
             parameter {
                 typeRef {
@@ -72,7 +73,7 @@ class HandlerTests {
         }
 
         val handlerCode = generatedCode.first()
-        assert(handlerCode.contains("class Handler__${handlerName}__1"))
+        assert(handlerCode.contains("class Handler__${packageName}__${handlerName}"))
         assert(handlerCode.contains("= $handlerName"))
         assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): $outputClass"))
     }
@@ -83,9 +84,10 @@ class HandlerTests {
         val outputClass = "TestReturnClass"
         val handlerName = "testHandler"
         val typeParamName = "TypeParam"
+        val packageName = "handlers"
 
         val funDecl = functionDeclaration {
-            setupHandler(handlerName)
+            setupHandler(handlerName, packageName)
 
             parameter {
                 typeRef {
@@ -140,7 +142,7 @@ class HandlerTests {
         }
 
         val handlerCode = generatedCode.first()
-        assert(handlerCode.contains("class Handler__${handlerName}__1"))
+        assert(handlerCode.contains("class Handler__${packageName}__${handlerName}"))
         assert(handlerCode.contains("= $handlerName"))
         assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass<out $typeParamName>?"))
@@ -153,9 +155,10 @@ class HandlerTests {
         val outputClass = "TestReturnClass"
         val handlerName = "testHandler"
         val typeParamName = "TypeParam"
+        val packageName = "handlers"
 
         val funDecl = functionDeclaration {
-            setupHandler(handlerName)
+            setupHandler(handlerName, packageName)
 
             parameter {
                 typeRef {
@@ -210,7 +213,7 @@ class HandlerTests {
         }
 
         val handlerCode = generatedCode.first()
-        assert(handlerCode.contains("class Handler__${handlerName}__1"))
+        assert(handlerCode.contains("class Handler__${packageName}__${handlerName}"))
         assert(handlerCode.contains("= $handlerName"))
         assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass<$typeParamName?>?"))
@@ -222,8 +225,9 @@ class HandlerTests {
         val inputClass = "TestInputClass"
         val outputClass = "TestReturnClass"
         val handlerName = "testHandler"
+        val packageName = "handlers"
         val funDecl = functionDeclaration {
-            setupHandler(handlerName)
+            setupHandler(handlerName, packageName)
 
             parameter {
                 typeRef {
@@ -268,7 +272,7 @@ class HandlerTests {
         }
 
         val handlerCode = generatedCode.first()
-        assert(handlerCode.contains("class Handler__${handlerName}__1"))
+        assert(handlerCode.contains("class Handler__${packageName}__${handlerName}"))
         assert(handlerCode.contains("= $handlerName"))
         assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass<*>?"))
@@ -281,8 +285,9 @@ class HandlerTests {
         val argClass = "TestArgClass"
         val outputClass = "TestReturnClass"
         val handlerName = "testHandler"
+        val packageName = "handlers"
         val funDecl = functionDeclaration {
-            setupHandler(handlerName)
+            setupHandler(handlerName, packageName)
 
             parameter {
                 name { "first" }
@@ -341,85 +346,11 @@ class HandlerTests {
         }
 
         val handlerCode = generatedCode.first()
-        assert(handlerCode.contains("class Handler__${handlerName}__1"))
+        assert(handlerCode.contains("class Handler__${packageName}__${handlerName}"))
         assert(handlerCode.contains("val second: $argClass"))
         assert(handlerCode.contains("= $handlerName"))
         assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
                 "$outputClass?"))
 
     }
-
-    @Test
-    fun `request handler function param`() {
-        val inputClass = "TestInputClass"
-        val argClass = "TestArgClass"
-        val outputClass = "TestReturnClass"
-        val handlerName = "testHandler"
-        val funDecl = functionDeclaration {
-            setupHandler(handlerName)
-
-            parameter {
-                name { "first" }
-                typeRef {
-                    type {
-                        nullability { Nullability.NOT_NULL }
-                        classDeclaration {
-                            packageName { "paramPackage" }
-                            qualifiedName { "paramPackage.$inputClass" }
-                            classKind { ClassKind.CLASS }
-                        }
-                    }
-                    element {
-                        mockkClass(KSClassifierReference::class)
-                    }
-                }
-            }
-
-            parameter {
-                name { "second" }
-                typeRef {
-                    type {
-                        nullability { Nullability.NULLABLE }
-                        classDeclaration {
-                            packageName { "paramPackage" }
-                            qualifiedName { "paramPackage.$argClass" }
-                            classKind { ClassKind.CLASS }
-                        }
-                    }
-                    element {
-                        mockkClass(KSClassifierReference::class)
-                    }
-                }
-            }
-
-            returnType {
-                type {
-                    nullability { Nullability.NULLABLE }
-                    classDeclaration {
-                        packageName { "returnPackage" }
-                        qualifiedName { "returnPackage.$outputClass" }
-                        classKind { ClassKind.CLASS }
-                    }
-                }
-            }
-        }
-
-        val generatedCode = generateStringOutput(1) {
-            val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
-
-            RequestHandlerVisitor().visitFunctionDeclaration(funDecl, Unit)
-            process(resolver)
-        }
-
-        val handlerCode = generatedCode.first()
-        assert(handlerCode.contains("class Handler__${handlerName}__1"))
-        assert(handlerCode.contains("= $handlerName"))
-        assert(handlerCode.contains("suspend fun handleRequest(request: $inputClass): " +
-                "$outputClass?"))
-
-    }
 }
-

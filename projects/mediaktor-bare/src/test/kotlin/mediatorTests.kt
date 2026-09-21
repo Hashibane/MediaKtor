@@ -19,9 +19,10 @@ class MediatorTests {
         val inputOneClass = "TestInputClass1"
         val outputOneClass = "TestReturnClass1"
         val handlerOneName = "testHandler1"
+        val packageName = "handlers"
 
         val handlerOne = functionDeclaration {
-            setupHandler(handlerOneName)
+            setupHandler(handlerOneName, packageName)
 
             parameter {
                 typeRef {
@@ -56,7 +57,7 @@ class MediatorTests {
         val handlerTwoName = "testHandler2"
 
         val handlerTwo = functionDeclaration {
-            setupHandler(handlerTwoName)
+            setupHandler(handlerTwoName, packageName)
 
             parameter {
                 typeRef {
@@ -86,7 +87,7 @@ class MediatorTests {
             }
         }
 
-        val generatedCode = generateStringOutput(1) {
+        val generatedCode = generateStringOutput(2) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
@@ -100,8 +101,8 @@ class MediatorTests {
         val mediatorCode = generatedCode.drop(2).first()
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend fun send"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerTwoName}"))
         assert(mediatorCode.contains("is $inputOneClass ->"))
         assert(mediatorCode.contains("is $inputTwoClass ->"))
     }
@@ -110,6 +111,7 @@ class MediatorTests {
     fun `multiple notifiers with same input type test`() {
         val inputOneClass = "TestInputClass1"
         val handlerOneName = "testHandler1"
+        val packageName = "handlers"
 
         val paramType: KSTypeReference.() -> Unit = {
             type {
@@ -125,6 +127,7 @@ class MediatorTests {
         val handlerOne = functionDeclaration {
             setupHandlerReturn(
                 handlerOneName,
+                packageName,
                 notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
             )
 
@@ -143,6 +146,7 @@ class MediatorTests {
         val handlerTwo = functionDeclaration {
             setupHandlerReturn(
                 handlerTwoName,
+                packageName,
                 notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
             )
 
@@ -156,7 +160,7 @@ class MediatorTests {
             }
         }
 
-        val generatedCode = generateStringOutput(1) {
+        val generatedCode = generateStringOutput(2) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
@@ -170,15 +174,15 @@ class MediatorTests {
         val mediatorCode = generatedCode.drop(2).first()
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend fun publish"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerTwoName}"))
         assert(mediatorCode.contains("is $inputOneClass ->"))
         assert(
             mediatorCode.contains(
-                """is TestInputClass1 -> {
+                """is $inputOneClass -> {
         coroutineScope {
-          handler__${handlerOneName.lowercase()}__1().handleRequest(notification)
-          handler__${handlerTwoName.lowercase()}__2().handleRequest(notification)
+          handler__${packageName.lowercase()}__${handlerOneName.lowercase()}().handleRequest(notification)
+          handler__${packageName.lowercase()}__${handlerTwoName.lowercase()}().handleRequest(notification)
         }
       }""".trimMargin()
             )
@@ -189,10 +193,12 @@ class MediatorTests {
     fun `multiple notifiers with different request types test`() {
         val inputOneClass = "TestInputClass1"
         val handlerOneName = "testHandler1"
+        val packageName = "handlers"
 
         val handlerOne = functionDeclaration {
             setupHandlerReturn(
                 handlerOneName,
+                packageName,
                 notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 0)
             )
 
@@ -219,6 +225,7 @@ class MediatorTests {
         val handlerTwo = functionDeclaration {
             setupHandlerReturn(
                 handlerTwoName,
+                packageName,
                 notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
             )
 
@@ -239,7 +246,7 @@ class MediatorTests {
             }
         }
 
-        val generatedCode = generateStringOutput(1) {
+        val generatedCode = generateStringOutput(2) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
@@ -253,16 +260,16 @@ class MediatorTests {
         val mediatorCode = generatedCode.drop(2).first()
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend fun publish"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerTwoName}"))
         assert(mediatorCode.contains("is $inputOneClass ->"))
         assert(mediatorCode.contains("is $inputTwoClass ->"))
-        assert(mediatorCode.contains("handler__${handlerOneName.lowercase()}__1().handleRequest(notification)"))
-        assert(mediatorCode.contains("handler__${handlerTwoName.lowercase()}__2().handleRequest(notification)"))
+        assert(mediatorCode.contains("handler__${packageName.lowercase()}__${handlerOneName.lowercase()}().handleRequest(notification)"))
+        assert(mediatorCode.contains("handler__${packageName.lowercase()}__${handlerTwoName.lowercase()}().handleRequest(notification)"))
         assert(
             !mediatorCode.contains(
-                """handler__${handlerOneName.lowercase()}__1().handleRequest(notification)
-            |          handler__${handlerTwoName.lowercase()}__2().handleRequest(notification)
+                """handler__${packageName.lowercase()}__${handlerOneName.lowercase()}().handleRequest(notification)
+            |          handler__${packageName.lowercase()}__${handlerTwoName.lowercase()}().handleRequest(notification)
         """.trimMargin()
             )
         )
@@ -272,10 +279,12 @@ class MediatorTests {
     fun `multiple parallel notifiers with reversed order`() {
         val inputOneClass = "TestInputClass1"
         val handlerOneName = "testHandler1"
+        val packageName = "handlers"
 
         val handlerOne = functionDeclaration {
             setupHandlerReturn(
                 handlerOneName,
+                packageName,
                 notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2)
             )
 
@@ -302,6 +311,7 @@ class MediatorTests {
         val handlerTwo = functionDeclaration {
             setupHandlerReturn(
                 handlerTwoName,
+                packageName,
                 notificationHandlerData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 1)
             )
 
@@ -322,7 +332,7 @@ class MediatorTests {
             }
         }
 
-        val generatedCode = generateStringOutput(1) {
+        val generatedCode = generateStringOutput(2) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
@@ -336,21 +346,21 @@ class MediatorTests {
         val mediatorCode = generatedCode.drop(2).first()
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend fun publish"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerTwoName}"))
         assert(mediatorCode.contains("is $inputOneClass ->"))
         assert(mediatorCode.contains("is $inputTwoClass ->"))
 
         assert(
             mediatorCode.indexOf(
-                "${handlerOneName.lowercase()}__1()"
-            ) > mediatorCode.indexOf("${handlerTwoName.lowercase()}__1()")
+                "${handlerOneName.lowercase()}()"
+            ) > mediatorCode.indexOf("${handlerTwoName.lowercase()}()")
         )
 
         assert(
             mediatorCode.contains(
                 """launch {
-                |            handler__${handlerOneName.lowercase()}__1().handleRequest(notification)
+                |            handler__${packageName.lowercase()}__${handlerOneName.lowercase()}().handleRequest(notification)
                 |          }
         """.trimMargin()
             )
@@ -358,7 +368,7 @@ class MediatorTests {
         assert(
             mediatorCode.contains(
                 """launch {
-                |            handler__${handlerTwoName.lowercase()}__2().handleRequest(notification)
+                |            handler__${packageName.lowercase()}__${handlerTwoName.lowercase()}().handleRequest(notification)
                 |          }
         """.trimMargin()
             )
@@ -397,6 +407,8 @@ class MediatorTests {
 
         val returnPackage = "returnPackage"
         val returnType = "ReturnType"
+
+        val packageName = "handlers"
 
         val inputFourClass: KSTypeReference.() -> Unit = {
             type {
@@ -478,7 +490,7 @@ class MediatorTests {
 
         val handlerOneName = "handlerOne"
         val handlerOne = functionDeclaration {
-            setupHandler(handlerOneName)
+            setupHandler(handlerOneName, packageName)
 
             parameter {
                 typeRef {
@@ -494,7 +506,7 @@ class MediatorTests {
 
         val handlerTwoName = "handlerTwo"
         val handlerTwo = functionDeclaration {
-            setupHandler(handlerTwoName)
+            setupHandler(handlerTwoName, packageName)
 
             parameter {
                 typeRef {
@@ -509,7 +521,7 @@ class MediatorTests {
 
         val handlerThreeName = "handlerThree"
         val handlerThree = functionDeclaration {
-            setupHandler(handlerThreeName)
+            setupHandler(handlerThreeName, packageName)
 
             parameter {
                 typeRef {
@@ -524,7 +536,7 @@ class MediatorTests {
 
         val handlerFourName = "handlerFour"
         val handlerFour = functionDeclaration {
-            setupHandler(handlerFourName)
+            setupHandler(handlerFourName, packageName)
 
             parameter {
                 typeRef {
@@ -543,6 +555,7 @@ class MediatorTests {
         val pipelineOne = functionDeclaration {
             setupHandler(
                 pipelineOneName,
+                packageName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.REQUEST_MATCH)
             )
 
@@ -593,6 +606,7 @@ class MediatorTests {
         val pipelineTwo = functionDeclaration {
             setupHandler(
                 pipelineTwoName,
+                packageName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.REQUEST_MATCH)
             )
 
@@ -643,6 +657,7 @@ class MediatorTests {
         val pipelineThree = functionDeclaration {
             setupHandler(
                 pipelineThreeName,
+                packageName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 1, PipelineTarget.REQUEST_MATCH)
             )
 
@@ -693,6 +708,7 @@ class MediatorTests {
         val pipelineFour = functionDeclaration {
             setupHandler(
                 pipelineFourName,
+                packageName,
                 additionalData = PipelineMetadata(
                     mockkClass(TypeName::class),
                     Int.MIN_VALUE,
@@ -743,7 +759,7 @@ class MediatorTests {
             }
         }
 
-        val generatedCode = generateStringOutput(1) {
+        val generatedCode = generateStringOutput(8) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
@@ -761,17 +777,17 @@ class MediatorTests {
             process(resolver)
         }
 
-        val mediatorCode = generatedCode.drop(2).first()
+        val mediatorCode = generatedCode.drop(8).first()
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend fun send"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerThreeName}__3"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerFourName}__4"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineOneName}__5"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineTwoName}__6"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineThreeName}__7"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineFourName}__8"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerTwoName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerThreeName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerFourName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineTwoName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineThreeName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineFourName}"))
         assert(mediatorCode.contains("is $inputOneType ->"))
         assert(mediatorCode.contains("is $inputTwoType ->"))
         assert(mediatorCode.contains("is $inputThreeType ->"))
@@ -779,22 +795,22 @@ class MediatorTests {
 
         assert(
             mediatorCode.contains(
-                """is InputType1 -> {
-      handler__${pipelineFourName.lowercase()}__8().handleRequest(message) {
-        handler__${pipelineOneName.lowercase()}__5().handleRequest(message) {
-          handler__${pipelineThreeName.lowercase()}__7().handleRequest(message) {
-            handler__${pipelineTwoName.lowercase()}__6().handleRequest(message) {
-              handler__${handlerOneName.lowercase()}__1().handleRequest(message)
+                """is $inputOneType -> {
+      handler__${packageName.lowercase()}__${pipelineFourName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineOneName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(message) {
+            handler__${packageName.lowercase()}__${pipelineTwoName.lowercase()}().handleRequest(message) {
+              handler__${packageName.lowercase()}__${handlerOneName.lowercase()}().handleRequest(message)
             }""".trimMargin()
             )
         )
 
         assert(
             mediatorCode.contains(
-                """is InputType3 -> {
-      handler__${pipelineFourName.lowercase()}__8().handleRequest(message) {
-        handler__${pipelineThreeName.lowercase()}__7().handleRequest(message) {
-          handler__${handlerThreeName.lowercase()}__3().handleRequest(message)
+                """is $inputThreeType -> {
+      handler__${packageName.lowercase()}__${pipelineFourName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${handlerThreeName.lowercase()}().handleRequest(message)
         }
       }
     }""".trimMargin()
@@ -803,10 +819,10 @@ class MediatorTests {
 
         assert(
             mediatorCode.contains(
-                """is InputType2 -> {
-      handler__${pipelineFourName.lowercase()}__8().handleRequest(message) {
-        handler__${pipelineTwoName.lowercase()}__6().handleRequest(message) {
-          handler__${handlerTwoName.lowercase()}__2().handleRequest(message)
+                """is $inputTwoType -> {
+      handler__${packageName.lowercase()}__${pipelineFourName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineTwoName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${handlerTwoName.lowercase()}().handleRequest(message)
         }
       }
     }""".trimMargin()
@@ -815,9 +831,9 @@ class MediatorTests {
 
         assert(
             mediatorCode.contains(
-                """is InputType4 -> {
-      handler__${pipelineFourName.lowercase()}__8().handleRequest(message) {
-        handler__${handlerFourName.lowercase()}__4().handleRequest(message)
+                """is $inputFourType -> {
+      handler__${packageName.lowercase()}__${pipelineFourName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${handlerFourName.lowercase()}().handleRequest(message)
       }
     }""".trimMargin()
             )
@@ -892,6 +908,8 @@ class MediatorTests {
         val returnPackage = "returnPackage"
         val returnType = "ReturnType"
 
+        val packageName = "handlers"
+
         val inputFourClass: KSTypeReference.() -> Unit = {
             type {
                 nullability { Nullability.NOT_NULL }
@@ -983,7 +1001,7 @@ class MediatorTests {
 
         val handlerOneName = "handlerOne"
         val handlerOne = functionDeclaration {
-            setupHandler(handlerOneName)
+            setupHandler(handlerOneName, packageName)
 
             parameter {
                 typeRef {
@@ -999,7 +1017,7 @@ class MediatorTests {
 
         val handlerTwoName = "handlerTwo"
         val handlerTwo = functionDeclaration {
-            setupHandler(handlerTwoName)
+            setupHandler(handlerTwoName, packageName)
 
             parameter {
                 typeRef {
@@ -1014,7 +1032,7 @@ class MediatorTests {
 
         val handlerThreeName = "handlerThree"
         val handlerThree = functionDeclaration {
-            setupHandler(handlerThreeName)
+            setupHandler(handlerThreeName, packageName)
 
             parameter {
                 typeRef {
@@ -1029,7 +1047,7 @@ class MediatorTests {
 
         val handlerFourName = "handlerFour"
         val handlerFour = functionDeclaration {
-            setupHandler(handlerFourName)
+            setupHandler(handlerFourName, packageName)
 
             parameter {
                 typeRef {
@@ -1048,6 +1066,7 @@ class MediatorTests {
         val notificationOne = functionDeclaration {
             setupHandler(
                 notificationOneName,
+                packageName,
                 additionalData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2)
             )
 
@@ -1067,6 +1086,7 @@ class MediatorTests {
         val notificationTwo = functionDeclaration {
             setupHandler(
                 notificationTwoName,
+                packageName,
                 additionalData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
             )
 
@@ -1098,6 +1118,7 @@ class MediatorTests {
         val pipelineOne = functionDeclaration {
             setupHandler(
                 pipelineOneName,
+                packageName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 0, PipelineTarget.REQUEST_MATCH)
             )
 
@@ -1149,6 +1170,7 @@ class MediatorTests {
         val pipelineTwo = functionDeclaration {
             setupHandler(
                 pipelineTwoName,
+                packageName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 2, PipelineTarget.REQUEST_MATCH)
             )
 
@@ -1198,7 +1220,9 @@ class MediatorTests {
         val pipelineThreeName = "pipelineThree"
         val pipelineThree = functionDeclaration {
             setupHandler(
-                pipelineThreeName, additionalData = PipelineMetadata(
+                pipelineThreeName,
+                packageName,
+                additionalData = PipelineMetadata(
                     mockkClass(TypeName::class), 1,
                     PipelineTarget.BOTH
                 )
@@ -1251,7 +1275,9 @@ class MediatorTests {
         val pipelineFourName = "pipelineFour"
         val pipelineFour = functionDeclaration {
             setupHandler(
-                pipelineFourName, additionalData = PipelineMetadata(
+                pipelineFourName, 
+                packageName,
+                additionalData = PipelineMetadata(
                     mockkClass(TypeName::class),
                     Int.MIN_VALUE, PipelineTarget.REQUEST_MATCH
                 )
@@ -1303,7 +1329,9 @@ class MediatorTests {
         val pipelineFiveName = "pipelineFive"
         val pipelineFive = functionDeclaration {
             setupHandler(
-                pipelineFiveName, additionalData = PipelineMetadata(
+                pipelineFiveName,
+                packageName,
+                additionalData = PipelineMetadata(
                     mockkClass(TypeName::class),
                     Int.MIN_VALUE, PipelineTarget.NOTIFICATIONS
                 )
@@ -1352,7 +1380,7 @@ class MediatorTests {
             }
         }
 
-        val generatedCode = generateStringOutput(1) {
+        val generatedCode = generateStringOutput(11) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
@@ -1375,20 +1403,20 @@ class MediatorTests {
             process(resolver)
         }
 
-        val mediatorCode = generatedCode.drop(2).first()
+        val mediatorCode = generatedCode.drop(11).first()
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend fun send"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerThreeName}__3"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerFourName}__4"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${notificationOneName}__5"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${notificationTwoName}__6"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineOneName}__7"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineTwoName}__8"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineThreeName}__9"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineFourName}__10"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineFiveName}__11"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerTwoName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerThreeName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerFourName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${notificationOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${notificationTwoName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineTwoName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineThreeName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineFourName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineFiveName}"))
         assert(mediatorCode.contains("is $inputOneType ->"))
         assert(mediatorCode.contains("is $inputTwoType ->"))
         assert(mediatorCode.contains("is $inputThreeType ->"))
@@ -1396,10 +1424,10 @@ class MediatorTests {
 
         assert(
             mediatorCode.contains("""is $inputOneType -> {
-      handler__${pipelineThreeName.lowercase()}__9().handleRequest(message) {
-        handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
-          handler__${pipelineOneName.lowercase()}__7().handleRequest(message) {
-            handler__${handlerOneName.lowercase()}__1().handleRequest(message)
+      handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineFourName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${pipelineOneName.lowercase()}().handleRequest(message) {
+            handler__${packageName.lowercase()}__${handlerOneName.lowercase()}().handleRequest(message)
           }
         }
       }
@@ -1410,9 +1438,9 @@ class MediatorTests {
 
         assert(
             mediatorCode.contains("""is $inputThreeType -> {
-      handler__${pipelineThreeName.lowercase()}__9().handleRequest(message) {
-        handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
-          handler__${handlerThreeName.lowercase()}__3().handleRequest(message)
+      handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineFourName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${handlerThreeName.lowercase()}().handleRequest(message)
         }
       }
     }""".trimMargin()
@@ -1422,9 +1450,9 @@ class MediatorTests {
         assert(
             mediatorCode.contains(
                 """is $inputTwoType -> {
-      handler__${pipelineThreeName.lowercase()}__9().handleRequest(message) {
-        handler__${pipelineTwoName.lowercase()}__8().handleRequest(message) {
-          handler__${handlerTwoName.lowercase()}__2().handleRequest(message)
+      handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineTwoName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${handlerTwoName.lowercase()}().handleRequest(message)
         }
       }
     }""".trimMargin()
@@ -1433,9 +1461,9 @@ class MediatorTests {
 
         assert(
             mediatorCode.contains("""is $inputFourType -> {
-      handler__${pipelineThreeName.lowercase()}__9().handleRequest(message) {
-        handler__${pipelineFourName.lowercase()}__10().handleRequest(message) {
-          handler__${handlerFourName.lowercase()}__4().handleRequest(message)
+      handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineFourName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${handlerFourName.lowercase()}().handleRequest(message)
         }
       }
     }""".trimMargin()
@@ -1474,10 +1502,10 @@ class MediatorTests {
             mediatorCode.contains(
                 """is $inputTwoType -> {
         coroutineScope {
-          handler__${pipelineFiveName.lowercase()}__11().handleRequest(notification) {
-            handler__${pipelineThreeName.lowercase()}__9().handleRequest(notification) {
+          handler__${packageName.lowercase()}__${pipelineFiveName.lowercase()}().handleRequest(notification) {
+            handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(notification) {
               launch {
-                handler__${notificationOneName.lowercase()}__5().handleRequest(notification)
+                handler__${packageName.lowercase()}__${notificationOneName.lowercase()}().handleRequest(notification)
               }
             }
           }
@@ -1490,8 +1518,8 @@ class MediatorTests {
             mediatorCode.contains(
                 """is $inputFourType -> {
         coroutineScope {
-          handler__${pipelineThreeName.lowercase()}__9().handleRequest(notification) {
-            handler__${notificationTwoName.lowercase()}__6().handleRequest(notification)
+          handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(notification) {
+            handler__${packageName.lowercase()}__${notificationTwoName.lowercase()}().handleRequest(notification)
           }
         }
       }""".trimMargin()
@@ -1531,6 +1559,8 @@ class MediatorTests {
 
         val returnPackage = "returnPackage"
         val returnType = "ReturnType"
+
+        val packageName = "handlers"
 
         val inputTwoClass: KSTypeReference.() -> Unit = {
             type {
@@ -1585,7 +1615,7 @@ class MediatorTests {
 
         val handlerOneName = "handlerOne"
         val handlerOne = functionDeclaration {
-            setupHandler(handlerOneName)
+            setupHandler(handlerOneName, packageName)
 
             parameter {
                 typeRef {
@@ -1601,7 +1631,7 @@ class MediatorTests {
 
         val handlerTwoName = "handlerTwo"
         val handlerTwo = functionDeclaration {
-            setupHandler(handlerTwoName)
+            setupHandler(handlerTwoName, packageName)
 
             parameter {
                 typeRef {
@@ -1620,6 +1650,7 @@ class MediatorTests {
         val notificationOne = functionDeclaration {
             setupHandler(
                 notificationOneName,
+                packageName,
                 additionalData = NotificationHandlerMetadata(NotificationParallel.PARALLEL, 2)
             )
 
@@ -1639,6 +1670,7 @@ class MediatorTests {
         val notificationTwo = functionDeclaration {
             setupHandler(
                 notificationTwoName,
+                packageName,
                 additionalData = NotificationHandlerMetadata(NotificationParallel.SEQUENTIAL, 1)
             )
 
@@ -1670,6 +1702,7 @@ class MediatorTests {
         val pipelineOne = functionDeclaration {
             setupHandler(
                 pipelineOneName,
+                packageName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 0,
                     PipelineTarget.BOTH)
             )
@@ -1721,6 +1754,7 @@ class MediatorTests {
         val pipelineTwo = functionDeclaration {
             setupHandler(
                 pipelineTwoName,
+                packageName,
                 additionalData = PipelineMetadata(mockkClass(TypeName::class), 2,
                     PipelineTarget.BOTH)
             )
@@ -1771,7 +1805,9 @@ class MediatorTests {
         val pipelineThreeName = "pipelineThree"
         val pipelineThree = functionDeclaration {
             setupHandler(
-                pipelineThreeName, additionalData = PipelineMetadata(
+                pipelineThreeName, 
+                packageName,
+                additionalData = PipelineMetadata(
                     mockkClass(TypeName::class), 1,
                     PipelineTarget.REQUESTS
                 )
@@ -1820,7 +1856,7 @@ class MediatorTests {
             }
         }
 
-        val generatedCode = generateStringOutput(1) {
+        val generatedCode = generateStringOutput(7) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
@@ -1839,25 +1875,25 @@ class MediatorTests {
             process(resolver)
         }
 
-        val mediatorCode = generatedCode.drop(2).first()
+        val mediatorCode = generatedCode.drop(7).first()
         assert(mediatorCode.contains(": Mediator"))
         assert(mediatorCode.contains("override suspend fun send"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerOneName}__1"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${handlerTwoName}__2"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${notificationOneName}__3"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${notificationTwoName}__4"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineOneName}__5"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineTwoName}__6"))
-        assert(mediatorCode.contains(": suspend () -> Handler__${pipelineThreeName}__7"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${handlerTwoName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${notificationOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${notificationTwoName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineOneName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineTwoName}"))
+        assert(mediatorCode.contains(": suspend () -> Handler__${packageName}__${pipelineThreeName}"))
         assert(mediatorCode.contains("is $inputOneType ->"))
         assert(mediatorCode.contains("is $inputTwoType ->"))
 
         assert(
             mediatorCode.contains("""is $inputOneType -> {
-      handler__${pipelineOneName.lowercase()}__5().handleRequest(message) {
-        handler__${pipelineThreeName.lowercase()}__7().handleRequest(message) {
-          handler__${pipelineTwoName.lowercase()}__6().handleRequest(message) {
-            handler__${handlerOneName.lowercase()}__1().handleRequest(message)
+      handler__${packageName.lowercase()}__${pipelineOneName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${pipelineTwoName.lowercase()}().handleRequest(message) {
+            handler__${packageName.lowercase()}__${handlerOneName.lowercase()}().handleRequest(message)
           }
         }
       }
@@ -1868,9 +1904,9 @@ class MediatorTests {
         assert(
             mediatorCode.contains(
                 """is $inputTwoType -> {
-      handler__${pipelineThreeName.lowercase()}__7().handleRequest(message) {
-        handler__${pipelineTwoName.lowercase()}__6().handleRequest(message) {
-          handler__${handlerTwoName.lowercase()}__2().handleRequest(message)
+      handler__${packageName.lowercase()}__${pipelineThreeName.lowercase()}().handleRequest(message) {
+        handler__${packageName.lowercase()}__${pipelineTwoName.lowercase()}().handleRequest(message) {
+          handler__${packageName.lowercase()}__${handlerTwoName.lowercase()}().handleRequest(message)
         }
       }
     }""".trimMargin()
@@ -1888,10 +1924,10 @@ class MediatorTests {
             mediatorCode.contains(
                 """is $inputOneType -> {
         coroutineScope {
-          handler__${pipelineOneName.lowercase()}__5().handleRequest(notification) {
-            handler__${pipelineTwoName.lowercase()}__6().handleRequest(notification) {
+          handler__${packageName.lowercase()}__${pipelineOneName.lowercase()}().handleRequest(notification) {
+            handler__${packageName.lowercase()}__${pipelineTwoName.lowercase()}().handleRequest(notification) {
               launch {
-                handler__${notificationOneName.lowercase()}__3().handleRequest(notification)
+                handler__${packageName.lowercase()}__${notificationOneName.lowercase()}().handleRequest(notification)
               }
             }
           }
@@ -1904,8 +1940,8 @@ class MediatorTests {
             mediatorCode.contains(
                 """is $inputTwoType -> {
         coroutineScope {
-          handler__${pipelineTwoName.lowercase()}__6().handleRequest(notification) {
-            handler__${notificationTwoName.lowercase()}__4().handleRequest(notification)
+          handler__${packageName.lowercase()}__${pipelineTwoName.lowercase()}().handleRequest(notification) {
+            handler__${packageName.lowercase()}__${notificationTwoName.lowercase()}().handleRequest(notification)
           }
         }
       }""".trimMargin()

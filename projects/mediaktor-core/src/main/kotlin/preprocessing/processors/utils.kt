@@ -59,7 +59,7 @@ fun MutableMap<TypeName, MutableList<HandlerType>>.verifyMetadata() {
 }
 
 fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
-                function: KSFunctionDeclaration, id: Int,
+                function: KSFunctionDeclaration,
                 handlerDescriptor: HandlerDescriptor,
                 typeMetadata: MutableMap<TypeName, MutableList<TypeName>>) {
     val functionName = function.simpleName.asString()
@@ -114,7 +114,7 @@ fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
 
     val handlerMetadata = HandlerMetadata(
         MemberName(packageName, functionName),
-        generatedClass = ClassName(packageName, "Handler__${functionName}__$id"),
+        generatedClass = ClassName(packageName, "Handler__${packageName.replace(".", "__")}__${functionName}"),
         inputType = resolvedRequestArg.toTypeName(),
         args = args.map {
             val propName = it.name?.asString()!! // cannot be null

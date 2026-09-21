@@ -1,5 +1,6 @@
 # MediaKtor
-TODO - code coverage
+[![codecov](https://codecov.io/github/Hashibane/MediaKtor/graph/badge.svg?token=5271LZAKP3)](https://codecov.io/github/Hashibane/MediaKtor)
+[![Kotlin](https://img.shields.io/badge/Kotlin-dont_forget_to_add_version_here-blue.svg?style=flat&logo=kotlin)](https://kotlinlang.org)
 
 Implementation of Mediator pattern using KSP and code generation. The project provides concise annotation-based API for
 functions with minimal overhead. It comes with out-of-the box pipeline support, notifications and optional Koin integration.

@@ -9,7 +9,7 @@ fun testHandler(arg: Int): String = arg.toString()
 class IntegrationTests {
     @Test
     fun `simple integration test`() {
-        val mediator = Mediator__Impl({ Handler__testHandler__1() })
+        val mediator = Mediator__Impl({ Handler____testHandler() })
 
         runBlocking {
             assert(mediator.send(4) == "4")

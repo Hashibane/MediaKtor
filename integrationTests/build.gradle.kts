@@ -1,10 +1,16 @@
 plugins {
-    alias(libs.plugins.kover)
+    id("buildsrc.convention.kotlin-jvm")
+    alias(libs.plugins.ksp)
 }
 
 subprojects {
     apply {
-        plugin("org.jetbrains.kotlin.jvm")
-        plugin("org.jetbrains.kotlinx.kover")
+        plugin("buildsrc.convention.kotlin-jvm")
+        plugin("com.google.devtools.ksp")
+    }
+
+    dependencies {
+        testImplementation(project(":projects:mediaktor-core"))
+        testImplementation(rootProject.libs.kotlinxCoroutines)
     }
 }

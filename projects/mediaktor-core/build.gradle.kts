@@ -1,17 +1,9 @@
 plugins {
-    // Apply the shared build logic from a convention plugin.
-    // The shared code is located in `buildSrc/src/main/kotlin/kotlin-jvm.gradle.kts`.
     id("buildsrc.convention.kotlin-jvm")
-    // Apply Kotlin Serialization plugin from `gradle/libs.versions.toml`.
-    alias(libs.plugins.kotlinPluginSerialization)
+    id("buildsrc.convention.dokka")
+    id("buildsrc.convention.codegen")
 }
 
 dependencies {
-    // Apply the kotlinx bundle of dependencies from the version catalog (`gradle/libs.versions.toml`).
-    implementation(libs.bundles.kotlinxEcosystem)
     testImplementation(kotlin("test"))
-
-    implementation("com.google.devtools.ksp:symbol-processing-api:2.3.6")
-    implementation("com.squareup:kotlinpoet:2.3.0")
-    implementation("com.squareup:kotlinpoet-ksp:2.3.0")
 }

@@ -4,6 +4,7 @@ dependencyResolutionManagement {
     @Suppress("UnstableApiUsage")
     repositories {
         mavenCentral()
+        mavenLocal()
     }
 
     // Reuse the version catalog from the main build.

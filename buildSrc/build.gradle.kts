@@ -19,4 +19,5 @@ dependencies {
     implementation(libs.dokka.javadoc)
     implementation(libs.kover)
     implementation(libs.kotlinxCoroutines)
+    implementation(libs.maven.publish)
 }

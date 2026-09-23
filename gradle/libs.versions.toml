@@ -11,14 +11,15 @@ ktor = "3.4.2"
 logback = "1.4.14"
 koin-bom = "4.1.1"
 dokka = "2.2.0"
-nmcp = "1.6.2"
 kover = "0.9.9"
 ksp = "2.3.11"
 ksp-api = "2.3.6"
 poet = "2.3.0"
 mock = "1.14.11"
+maven-publish = "0.37.0"
 
 [libraries]
+maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "maven-publish"}
 kotlinGradlePlugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
 kotlinJvm = { module = "org.jetbrains.kotlin.jvm:org.jetbrains.kotlin.jvm.gradle.plugin", version.ref = "kotlin"}
 kotlinxDatetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }

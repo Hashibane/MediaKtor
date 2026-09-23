@@ -2,19 +2,9 @@ import buildsrc.convention.exclude
 
 plugins {
     id("buildsrc.convention.kotlin-jvm")
-    id("buildsrc.convention.dokka")
+    id("org.jetbrains.dokka")
+    id("org.jetbrains.dokka-javadoc")
     id("org.jetbrains.kotlinx.kover")
-    alias(libs.plugins.nmcp)
-}
-
-subprojects.exclude("samples", "test") {
-    subprojects.exclude("testing") {
-        apply {
-            plugin("buildsrc.convention.core-plugin")
-            plugin("buildsrc.convention.dokka")
-            plugin("com.gradleup.nmcp")
-        }
-    }
 }
 
 
@@ -44,8 +34,4 @@ kover {
             }
         }
     }
-}
-
-nmcpAggregation {
-    publishAllProjectsProbablyBreakingProjectIsolation()
 }

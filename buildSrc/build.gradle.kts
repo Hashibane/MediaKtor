@@ -14,9 +14,9 @@ dependencies {
     implementation(libs.kotlinGradlePlugin)
     implementation(libs.kotlinJvm)
     implementation(libs.ksp.api)
-    implementation(libs.poet)
-    implementation(libs.poet.ksp)
+    implementation(libs.ksp)
     implementation(libs.dokka)
     implementation(libs.dokka.javadoc)
     implementation(libs.kover)
+    implementation(libs.kotlinxCoroutines)
 }

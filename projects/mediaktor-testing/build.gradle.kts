@@ -5,6 +5,9 @@ plugins {
 dependencies {
     testImplementation(kotlin("test"))
     implementation(libs.mock)
-
     implementation(project(":projects:mediaktor-core"))
+
+    implementation(libs.ksp.api)
+    implementation(libs.poet)
+    implementation(libs.poet.ksp)
 }

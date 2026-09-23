@@ -1,9 +1,12 @@
 plugins {
+    id("buildsrc.convention.publish")
     id("buildsrc.convention.kotlin-jvm")
-    id("buildsrc.convention.dokka")
-    id("buildsrc.convention.codegen")
 }
 
 dependencies {
     testImplementation(kotlin("test"))
+
+    implementation(libs.ksp.api)
+    implementation(libs.poet)
+    implementation(libs.poet.ksp)
 }

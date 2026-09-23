@@ -1,6 +1,6 @@
 plugins {
     id("buildsrc.convention.kotlin-jvm")
-    alias(libs.plugins.ksp)
+    id("com.google.devtools.ksp")
     alias(libs.plugins.kotlinPluginSerialization)
 
 }
@@ -11,9 +11,9 @@ repositories {
 }
 
 dependencies {
-    implementation("com.hashibane:mediaktor-core:0.0.2")
-    implementation("com.hashibane:mediaktor-koin:0.0.2")
-    ksp("com.hashibane:mediaktor-koin:0.0.2")
+    implementation(project(":projects:mediaktor-core"))
+    implementation(project(":projects:mediaktor-koin"))
+    ksp(project(":projects:mediaktor-koin"))
     implementation(libs.kotlinxCoroutines)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.serialization.kotlinx.json)

@@ -6,7 +6,7 @@ plugins {
 dependencies {
     testImplementation(kotlin("test"))
     testImplementation(libs.mock)
-    testImplementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
+    testImplementation(libs.logging)
     testImplementation(project(":projects:mediaktor-testing"))
     testImplementation(project(":projects:mediaktor-core"))
 

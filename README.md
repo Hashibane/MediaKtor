@@ -1,6 +1,6 @@
 # MediaKtor
 [![codecov](https://codecov.io/github/Hashibane/MediaKtor/graph/badge.svg?token=5271LZAKP3)](https://codecov.io/github/Hashibane/MediaKtor)
-[![Kotlin](https://img.shields.io/badge/Kotlin-dont_forget_to_add_version_here-blue.svg?style=flat&logo=kotlin)](https://kotlinlang.org)
+[![Kotlin](https://img.shields.io/badge/Kotlin-2.3.0-blue.svg?style=flat&logo=kotlin)](https://kotlinlang.org)
 
 Implementation of Mediator pattern using KSP and code generation. The project provides concise annotation-based API for
 functions with minimal overhead. It comes with out-of-the box pipeline support, notifications and optional Koin integration.
@@ -15,9 +15,25 @@ The key differences from other mediator projects include:
 
 ## Contents
 
-TODO
+- [MediaKtor](#mediaktor)
+    - [Contents](#contents)
+    - [1. Install](#1-install)
+    - [2. Quickstart](#2-quickstart-with-koin--ktor)
+    - [3. Usage](#3-usage)
+        - [3.1 Message types](#31-message-types)
+        - [3.2 Handler types](#32-handler-types)
+            - [3.2.1 Request Handlers](#321-request-handlers)
+            - [3.2.2 Notification Handlers](#322-notification-handlers)
+            - [3.2.3 Pipeline Behaviors](#323-pipeline-behaviors)
+        - [3.3 Request type matching](#33-request-type-matching)
+        - [3.4 Handler options](#34-handler-options)
+    - [4. DI integration](#4-di-integration)
+        - [4.1 Bare (no DI)](#41-bare-no-di)
+        - [4.2 Koin](#42-koin-integration)
+    - [5. Usage tips](#5-usage-tips)
+---
 
-## Install
+## 1. Install
 
 Include plugin KSP in your `build.gradle.kts`:
 ```kotlin
@@ -32,7 +48,7 @@ and `mediaktor-core` and one of the DI framework extensions in dependencies:
 ```kotlin
 dependencies {
     // ...
-    
+
     val version = "<Current Version>"
     implementation("com.hashibane:mediaktor-core:$version")
 
@@ -42,13 +58,13 @@ dependencies {
     // for koin
     ksp("com.hashibane:mediaktor-koin:$version")
     implementation("com.hashibane:mediaktor-koin:$version")
-    
+
+    // for koin libs.versions.toml configuration see koin documentation
     implementation(platform(libs.koin.bom))
     implementation(libs.koin.core) // or other corresponding koin platform
 }
 ```
-
-## Quickstart with Koin
+## 2. Quickstart with Koin & Ktor
 
 ```kotlin
 class DBConnection(val connectionString: String)
@@ -59,41 +75,52 @@ fun intToString(arg: Int, connection: DBConnection): String {
     return arg.toString()
 }
 
-fun main() {
+fun main(args: Array<String>) {
+    EngineMain.main(args)
+}
+
+fun Application.module() {
     val appModule = module {
         // Your handler dependencies - loggers, database connections etc. that are required for handlers/pipelines
         single { DBConnection("<SomeUrl>") }
 
         provideMediator()
     }
-
-    startKoin {
+    // or startKoin { modules(appModule) } in koin core
+    install(Koin) {
         modules(appModule)
     }
 
-    val mediator: Mediator = get()
-    
-    println(mediator.send(1234))
+    // or val mediator: Mediator = get() in koin core
+    val mediator by inject<Mediator>()
+
+    routing {
+        get("/{number}") {
+            val number = call.parameters["number"].toInt()
+            val response = mediator.send(number)
+            call.respond(HttpStatusCode.OK, response.toString())
+        }
+    }
 }
 ```
 
 > [!NOTE]
 > For more in depth sample look at `samples/ktorSample`
 
-## Usage
+## 3. Usage
 
-### Message types
+### 3.1 Message types
 
 Different from other implementations, there is no dedicated Message or Notification type. You may use any non-nullable
 type as your request type.
 
-### Handler types
+### 3.2 Handler types
 
 Handlers are implemented through annotations. This means any function annotated with either of:
 
- - ```@RequestHandler```
- - ```@NotificationHandler```
- - ```@PipelineBehavior```
+- ```@RequestHandler```
+- ```@NotificationHandler```
+- ```@PipelineBehavior```
 
 | Handler               | Calls on request | Returns       | Dispatched with                           |
 |-----------------------|------------------|---------------|-------------------------------------------|
@@ -104,12 +131,12 @@ Handlers are implemented through annotations. This means any function annotated 
 Every handler has also config options. PipelineBehavior types depend on their `target`.
 
 > [!IMPORTANT]
-> By convention, the first argument of annotated function must be the actual request and all others are dependencies injected
-> on a function call. Using a DI framework to resolve dependencies is a preferred method.
+> By convention, the first argument of annotated function must be the actual request type and all other dependencies are injected
+> on function call. Using a DI framework to resolve dependencies is the preferred method.
 
 If no corresponding handlers request type is found for the request, `IllegalArgumentException` is thrown.
 
-### Request Handlers
+### 3.2.1 Request Handlers
 
 Request handlers are functions annotated with ```@RequestHandler```.
 
@@ -133,10 +160,10 @@ fun sendMessage(message: Request) {
 }
 ```
 
-### Notification Handlers
+### 3.2.2 Notification Handlers
 
 Notification handlers are functions annotated with ```@NotificationHandler```. Similarly to request handlers, they
-respond to an exact (sub)type of the message. For any given type, there may be any number of notification handlers. The return
+respond to an exact [sub]type of the message. For any given type, there may be any number of notification handlers. The return
 type must always be `Unit`. Notifications are published via mediators ```publish()``` method.
 
 #### Example
@@ -160,10 +187,10 @@ fun publishNotification(notification: Request) {
 }
 ```
 
-### Pipeline Behaviors
+### 3.2.3 Pipeline Behaviors
 
 Pipeline behaviors are functions annotated with ```@PipelineBehavior```. All pipelines must contain the `next` parameter
-with type `suspend () -> <HandlerReturnType or Any?>` depending on the pipeline target. All pipelines
+with type `suspend () -> <HandlerReturnType>` or `suspend () -> Any?` depending on the pipeline target. All pipelines
 must be `suspend` functions.
 
 #### Example
@@ -171,7 +198,7 @@ must be `suspend` functions.
 ```kotlin
 data class Request(val content: String)
 
-@PipelineBehavior(target = PipelineTarget.STRICT_NOTIFICATIONS)
+@PipelineBehavior(target = PipelineTarget.NOTIFICATIONS)
 suspend fun verify(arg: Request, next: suspend () -> Unit) {
     if (arg.content.contains("OK")) {
         next()
@@ -191,10 +218,10 @@ fun publishNotification(notification: Request) {
 }
 ```
 
-### Request type inheritance
+### 3.3 Request type matching
 
-If you register a type, then mediator calls the most specific handler (request or notification) 
-for a given type. A handler will handle its requests subtypes if there is no handler that would handle them.
+If you register a type, then mediator calls the most specific handler (request or notification)
+for a given type. A handler will handle its request subtypes if there is no handler that would handle them.
 A pipeline will also intercept any calls that involve its request subtype.
 
 #### Example
@@ -203,7 +230,7 @@ A pipeline will also intercept any calls that involve its request subtype.
 interface Request
 data class RequestSubtype(val content: String) : Request
 
-@PipelineBehavior(target = PipelineTarget.STRICT_NOTIFICATIONS)
+@PipelineBehavior(target = PipelineTarget.NOTIFICATIONS)
 suspend fun verify(arg: Request, next: suspend () -> Unit) {
     if (arg.content.contains("OK")) {
         next()
@@ -218,75 +245,111 @@ fun notifierOne(arg: RequestSubtype, logger: Logger) {
 }
 
 fun publishNotification(notification: Request = RequestSubtype("subtype!")) {
-    val mediator by inject<Mediator>() // in Koin
+    val mediator: Mediator = get() // in Koin
     val response = mediator.publish(message)
 }
 ```
 
-### Handler options
+### 3.4 Handler options
 
 #### General options
 
-- Lifespan
+- **Lifespan**
+
   Handlers are singletons (`SINGLE`) by default. You can also specify `FACTORY` to create new handler every call.
   Lifespan does not matter when using `mediaktor-bare`.
 
 #### Notification handlers
 
-- Order
+- **Order**
+
   You may specify which notification handler goes first with the order parameter. The lower the value, the earlier
-  the handler is called. For example, handler with order value 0 gets called before handler with order 1. The default
+  the handler is called. For example, handler with order value `0` gets called before handler with order `1`. The default
   order is `Int.MIN_VALUE` (outermost possible).
-- Parallelism
+
+- **Parallel**
+
   Notifications calls are wrapped inside `launch {}` and by default run in parallel.
   If you specify `SEQUENTIAL` value for `parallel` parameter, the handler gets called without the `launch {}`.
 
 #### Pipeline Handlers
 
-- Order
-  Works the same as notification handlers order. `REQUEST_MATCH` pipelines are applied strictly after any other pipelines, but
-  they respect order value between eachother. Default value is `INT.MIN_VALUE`.
-- Target
-  Specifies target for the pipeline. Every pipeline must have return type and "next" parameter type chosen according
+- **Order**
+
+  Works the same as notification handlers order. `REQUEST_MATCH` pipelines are applied strictly after any other pipelines, but they respect order value between eachother. Default value is `INT.MIN_VALUE`.
+
+- **Target**
+
+  Specifies target for the pipeline. Every pipeline must have return type and `next` parameter type chosen according
   to their target.
 
-  | Target           | Applied to                                               | Return type                        | `next` type              |
-  |------------------|----------------------------------------------------------|------------------------------------|--------------------------|
-  | `REQUESTS_MATCH` | Request handlers that match request and return type      | Request handlers return type [`T`] | ```suspend () -> T```    |
-  | `REQUEST`        | Request handlers that match request type                 | `Any?`                             | ```suspend () -> Any?``` |
-  | `NOTIFICATIONS`  | Notification handlers                                    | `Unit`                             | ```suspend () -> Unit``` | 
-  | `BOTH`           | Notification or request handlers that match request type | `Any?`                             | ```suspend () -> Any?``` |
+  | Target          | Applied to                                                 | Return type                               | `next` type              |
+  |-----------------|------------------------------------------------------------|-------------------------------------------|--------------------------|
+  | `REQUEST_MATCH` | Request handlers matching<br/>request and return type      | Request handlers<br/>that return type `T` | ```suspend () -> T```    |
+  | `REQUESTS`      | Request handlers matching<br/>request type                 | `Any?`                                    | ```suspend () -> Any?``` |
+  | `NOTIFICATIONS` | Notification handlers                                      | `Unit`                                    | ```suspend () -> Unit``` | 
+  | `BOTH`          | Notification or request<br/>handlers matching request type | `Any?`                                    | ```suspend () -> Any?``` |
 
-If a `REQUEST_MATCH` pipeline does not match the return type but matches the request type, it is not applied and a warning is emitted.
 
-### Koin integration
+    If a `REQUEST_MATCH` pipeline does not match the return type but matches the request type, it is not applied and a warning is emitted.
 
-To automatically inject all required dependencies, declare a Koin module and call 
+## 4. DI integration
+
+### 4.1 Bare (no DI)
+
+In bare version, you use generated names without any abstractions. The generated mediator class is `Mediator__Impl` declared in package of the same name. If you want to use handler generated from function `functionName()` from package `packageName`, the generated class will have the same package as function and name `Handler__<packageNameWithDotsReplaced>__functionName`, where `packageNameWithDotsReplaced` is `packageName`, where each dot was replaced by double `_`.
+
+#### Example
+
+```kotlin
+import Mediator__Impl.Mediator__Impl
+import annotations.RequestHandler
+
+@RequestHandler
+fun testHandler(arg: Int): String = arg.toString()
+
+suspend fun runBareMediator() {
+    val mediator = Mediator__Impl({ Handler____testHandler() })
+
+    println(mediator.send(4))
+}
+```
+In this example, the package name is empty so the generated name is:
+
+`Handler + __ + (empty string) + __ + functionName = Handler____functionName`
+
+### 4.2 Koin integration
+
+To automatically inject all required dependencies, declare a Koin module and call
 `provideMediator()`:
 
 #### Example
 ```kotlin
 val appModule = module {
-        // Your handler dependencies - loggers, database connections etc.
-        single { logger }
+    // Your handler dependencies - loggers, database connections etc.
+    // ...
 
-        provideMediator()
+    provideMediator()
 }
 
-// for Ktor
-install(Koin) { 
-    modules(appModule)
+fun main() {
+    // for core
+    startKoin {
+        modules(appModule)
+    }
+
+    val mediator: Mediator = get()
 }
 ```
 
 then you will be able to inject mediator via `Mediator` interface.
 
-### Usage tips
+## 5. Usage tips
 
-Pipelines are generally not meant to care about what the next parameter will return. If not needed, you should pass
-the `next()` result to the return as is or wrapped. If you need to check for the returned type or modify it, you
+Pipelines are generally not meant to care about what the `next` parameter will return. If not needed, you should pass
+`next()` result to the return as is or wrapped. If you need to check for the returned type or modify it, you
 should use `REQEST_MATCH` target.
 
 
-Using MediaKtor with DI framework is the recommended way. Otherwise, you will need to track handler classes manually and
-handle implementation details that are otherwise hidden.
+Using MediaKtor with DI framework is the recommended way. Otherwise, you will need to track handler classes names and
+implementation details that are usually hidden.

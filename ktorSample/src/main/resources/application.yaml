@@ -1,6 +1,0 @@
-ktor:
-  application:
-    modules:
-      - MainKt.module
-  deployment:
-    port: 8080

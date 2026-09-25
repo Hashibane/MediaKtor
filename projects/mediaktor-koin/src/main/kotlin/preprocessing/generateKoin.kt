@@ -1,3 +1,5 @@
+package preprocessing
+
 import annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.squareup.kotlinpoet.ClassName

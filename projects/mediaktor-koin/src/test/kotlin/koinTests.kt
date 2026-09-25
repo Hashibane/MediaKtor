@@ -4,6 +4,7 @@ import testUtils.functionDeclaration
 import testUtils.generateStringOutput
 import io.mockk.every
 import io.mockk.mockkClass
+import preprocessing.KoinProcessor
 import testUtils.setupHandlerLifespan
 import kotlin.math.log
 import kotlin.test.Test
@@ -23,7 +24,7 @@ class KoinTests {
             setupHandlerLifespan(handlerTwoName, packageName, HandlerLifespan.FACTORY)
         }
 
-        val generatedCode = generateStringOutput(1, { codeGenerator, logger -> KoinProcessor(codeGenerator, logger)}) {
+        val generatedCode = generateStringOutput(1, { codeGenerator, logger -> KoinProcessor(codeGenerator, logger) }) {
             val resolver = mockkClass(Resolver::class)
             every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
             every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()

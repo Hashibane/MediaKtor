@@ -2,6 +2,7 @@ package buildsrc.convention
 
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
+import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
 
 
 plugins {
@@ -11,6 +12,17 @@ plugins {
     id("org.jetbrains.kotlinx.kover")
 }
 
+dokka {
+    dokkaSourceSets {
+        configureEach {
+            documentedVisibilities(VisibilityModifier.Public)
+            perPackageOption {
+                matchingRegex.set(".*preprocessing.*")
+                suppress.set(true)
+            }
+        }
+    }
+}
 
 mavenPublishing {
     configureBasedOnAppliedPlugins(

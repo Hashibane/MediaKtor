@@ -2,7 +2,7 @@ package preprocessing.generators
 
 import com.squareup.kotlinpoet.*
 
-fun generateHandler(
+internal fun generateHandler(
     handlerType: preprocessing.metadata.HandlerType
 ): FileSpec {
     val metadata = handlerType.handlerMetadata

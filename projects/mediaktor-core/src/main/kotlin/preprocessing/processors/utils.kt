@@ -26,25 +26,24 @@ import preprocessing.metadata.PipelineMetadata
 import preprocessing.metadata.RequestHandler
 
 
-fun KSType.toTypeNameOrLambda(): TypeName {
+internal fun KSType.toTypeNameOrLambda(): TypeName =
     if (declaration is KSFunctionDeclaration) {
-        return LambdaTypeName.get(
+        LambdaTypeName.get(
             parameters = (declaration as KSFunctionDeclaration).parameters
                 .map { ParameterSpec.builder(it.name?.asString() ?: "_", TypeCache[it.type].toTypeName()).build() },
             returnType = (declaration as KSFunctionDeclaration).returnType!!.toTypeName(),
         )
     }
     else
-        return toTypeName()
-}
+        toTypeName()
 
-fun <T, R> MutableMap<T, MutableList<R>>.extend(key: T, element: R) {
+internal fun <T, R> MutableMap<T, MutableList<R>>.extend(key: T, element: R) {
     val list = get(key) ?: mutableListOf()
     list.add(element)
     this[key] = list
 }
 
-fun MutableMap<TypeName, MutableList<HandlerType>>.verifyMetadata() {
+internal fun MutableMap<TypeName, MutableList<HandlerType>>.verifyMetadata() {
     forEach { (name, metadata) ->
         val filteredMetadata = metadata.filterIsInstance<RequestHandler>()
         if (filteredMetadata.size > 1) {
@@ -58,7 +57,7 @@ fun MutableMap<TypeName, MutableList<HandlerType>>.verifyMetadata() {
     }
 }
 
-fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
+internal fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
                 function: KSFunctionDeclaration,
                 handlerDescriptor: HandlerDescriptor,
                 typeMetadata: MutableMap<TypeName, MutableList<TypeName>>) {

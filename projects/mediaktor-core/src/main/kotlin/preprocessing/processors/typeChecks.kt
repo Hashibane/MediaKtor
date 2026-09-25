@@ -6,7 +6,7 @@ import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.UNIT
 import preprocessing.exceptions.PreprocessingException
 
-fun verifyPipeline(functionName: String, nextReturn: TypeName, returnType: TypeName, target: PipelineTarget) {
+internal fun verifyPipeline(functionName: String, nextReturn: TypeName, returnType: TypeName, target: PipelineTarget) {
 
     val any = ANY.copy(nullable = true)
     val isPassNotifications = target == PipelineTarget.NOTIFICATIONS

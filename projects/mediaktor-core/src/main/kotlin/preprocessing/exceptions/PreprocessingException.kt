@@ -1,4 +1,4 @@
 package preprocessing.exceptions
 
-//TODO : Change to more specific exception subclass
+/** Thrown when there is an error in preprocessing */
 class PreprocessingException(override val message: String) : Exception()

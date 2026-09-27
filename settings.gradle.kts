@@ -21,3 +21,4 @@ include("integrationTests:integrationTestDiamond")
 include("samples:ktorSample")
 
 rootProject.name = "MediaKtor"
+include("docs")

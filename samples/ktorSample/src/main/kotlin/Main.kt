@@ -23,7 +23,6 @@ fun main(args: Array<String>) {
 }
 
 
-
 fun Application.module() {
     val appModule = module {
         // Your handler dependencies - loggers, database connections etc.
@@ -60,7 +59,9 @@ fun Application.module() {
             val response = mediator.send(
                 WriteInventoryCommand(
                     ItemModel(itemId, "SomeName", 12, "SomeConfidentialData"),
-                Permission.AUTHORIZED))
+                    Permission.AUTHORIZED
+                )
+            )
             call.respond(HttpStatusCode.OK, response.toString())
         }
 

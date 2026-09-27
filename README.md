@@ -280,7 +280,7 @@ fun publishNotification(notification: Request = RequestSubtype("subtype!")) {
 
 - **Target**
 
-  Specifies target for the pipeline. Every pipeline must have return type and `next` parameter type chosen according
+  Specifies to which handlers the pipeline should be applied. Every pipeline must have return type and `next` parameter type chosen according
   to their target.
 
   | Target          | Applied to                                                 | Return type                               | `next` type              |

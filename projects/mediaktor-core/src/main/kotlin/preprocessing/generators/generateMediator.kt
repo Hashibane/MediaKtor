@@ -10,11 +10,11 @@ import preprocessing.metadata.PipelineHandler
 import preprocessing.metadata.RequestHandler
 import kotlin.collections.forEach
 
-data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
+internal data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
 
-fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<preprocessing.metadata.HandlerType>>,
+internal fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<preprocessing.metadata.HandlerType>>,
                      typeSorter: Comparator<TypeName>, logger: KSPLogger
-): preprocessing.generators.MediatorMetadata? {
+): MediatorMetadata? {
     if (handlerRegistry.isEmpty()) return null
 
     val superInterface = ClassName("interfaces", "Mediator")

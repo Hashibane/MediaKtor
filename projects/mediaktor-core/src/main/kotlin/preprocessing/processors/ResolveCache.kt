@@ -3,7 +3,7 @@ package preprocessing.processors
 import com.google.devtools.ksp.symbol.KSType
 import com.google.devtools.ksp.symbol.KSTypeReference
 
-object TypeCache {
+internal object TypeCache {
     private val cache: MutableMap<KSTypeReference, KSType> = mutableMapOf()
 
     operator fun get(reference: KSTypeReference): KSType = when (val hit = cache[reference]) {

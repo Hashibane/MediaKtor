@@ -27,8 +27,8 @@ enum class NotificationParallel {
  */
 enum class PipelineTarget(val isStrict: Boolean) {
     /** [REQUEST_MATCH] pipelines are applied to request handlers with matching request and return type, where the
-     * request type and its subtypes are matched. Return type is matched exactly.
-     * Return type of the pipeline should be the same as return type of the request handler - `T`.
+     * request type and its subtypes are matched. Return type of the pipeline must be the same
+     * as return type of the request handler - `T`.
      * The `next` parameter should be of type `suspend () -> T`.
      *
      * If a [REQUEST_MATCH] pipeline does not match the return type but matches the request type,
@@ -51,7 +51,7 @@ enum class PipelineTarget(val isStrict: Boolean) {
     /**
      * [BOTH] pipelines are applied to request and notification handlers matching the request type and its subtypes.
      * Return type of the pipeline should be `Any?` and the `next` parameter type should be `suspend () -> Any?`.
-     * For notification handlers, the returned value is not passed to next pipelines or `publish()` function.
+     * For notification handlers, the returned value is not passed to next pipelines or [interfaces.Mediator.publish] method.
      */
     BOTH(false)
 }

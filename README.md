@@ -50,14 +50,14 @@ dependencies {
     // ...
 
     val version = "<Current Version>"
-    implementation("com.hashibane:mediaktor-core:$version")
+    implementation("io.github.hashibane:mediaktor-core:$version")
 
     // for no DI framework
-    ksp("com.hashibane:mediaktor-bare:$version")
+    ksp("io.github.hashibane:mediaktor-bare:$version")
 
     // for koin
-    ksp("com.hashibane:mediaktor-koin:$version")
-    implementation("com.hashibane:mediaktor-koin:$version")
+    ksp("io.github.hashibane:mediaktor-koin:$version")
+    implementation("io.github.hashibane:mediaktor-koin:$version")
 
     // for koin libs.versions.toml configuration see koin documentation
     implementation(platform(libs.koin.bom))

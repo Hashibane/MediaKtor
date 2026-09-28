@@ -11,9 +11,9 @@ repositories {
 }
 
 dependencies {
-    // or com.hashibane.mediaktor-core:<version>
+    // or io.github.hashibane.mediaktor-core:<version>
     implementation(project(":projects:mediaktor-core"))
-    // or com.hashibane.mediaktor-koin:<version>
+    // or io.github.hashibane.mediaktor-koin:<version>
     implementation(project(":projects:mediaktor-koin"))
     ksp(project(":projects:mediaktor-koin"))
     implementation(libs.kotlinxCoroutines)

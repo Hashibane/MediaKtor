@@ -29,4 +29,38 @@ mavenPublishing {
         javadocJar = JavadocJar.Dokka("dokkaGenerateJavadoc"),
         sourcesJar = SourcesJar.Sources(),
     )
+
+    publishToMavenCentral()
+    signAllPublications()
+
+    coordinates(rootProject.group.toString(), project.name, rootProject.version.toString())
+
+    pom {
+        name = project.name
+        description = "Concise mediator implementation in Kotlin"
+        inceptionYear = "2026"
+        url = "https://github.com/Hashibane/MediaKtor"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://opensource.org/license/mit"
+                distribution = "https://opensource.org/license/mit"
+            }
+        }
+        developers {
+            developer {
+                id = "Hashibane"
+                name = "Jacek Jeczeń"
+                email = "jacek_jeczen@proton.me"
+
+                organization = "Hashibane"
+                organizationUrl = "https://github.com/Hashibane"
+            }
+        }
+        scm {
+            url = "https://github.com/Hashibane/MediaKtor"
+            connection = "scm:git:git://github.com/Hashibane/MediaKtor.git"
+            developerConnection = "scm:git:ssh://git@github.com/Hashibane/MediaKtor.git"
+        }
+    }
 }

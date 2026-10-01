@@ -1,5 +1,3 @@
-import org.jetbrains.dokka.gradle.engine.parameters.VisibilityModifier
-
 plugins {
     id("buildsrc.convention.kotlin-jvm")
     id("org.jetbrains.dokka")

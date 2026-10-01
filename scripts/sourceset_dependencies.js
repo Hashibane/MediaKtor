@@ -1,0 +1,1 @@
+sourceset_dependencies = '{":projects:mediaktor-core/main":[],":projects:mediaktor-koin/main":[]}'

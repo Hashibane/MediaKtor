@@ -362,7 +362,8 @@ implementation details that are usually hidden.
 Thank you for your work <3
 
 <a href="https://github.com/Hashibane/MediaKtor/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=Hashibane/MediaKtor"/>
+  <img src="https://contrib.rocks/image?repo=Hashibane/MediaKtor&max=24" />
 </a>
 
+---
 Special thanks to [codringher](https://github.com/codringher) for initial feature suggestions and review.

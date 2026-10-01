@@ -43,8 +43,8 @@ mavenPublishing {
         licenses {
             license {
                 name = "MIT License"
-                url = "https://opensource.org/license/mit"
-                distribution = "https://opensource.org/license/mit"
+                url = "https://www.apache.org/licenses/LICENSE-2.0"
+                distribution = "https://www.apache.org/licenses/LICENSE-2.0"
             }
         }
         developers {

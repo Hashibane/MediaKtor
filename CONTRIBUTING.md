@@ -1,7 +1,7 @@
 # Contributing
 
 Thank you for the interest in MediaKtor. If you want to contribute, fork the repository and make a pull request
-with the changes. 
+with the changes. Your branch name should follow `<YourGitName>/YYMMDD/<NameOfTheChange>`.
 
 ## GitHub issues
 

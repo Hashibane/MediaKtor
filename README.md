@@ -11,6 +11,8 @@ The key differences from other mediator projects include:
 - Code generation (no reflection)
 - Pipeline order and targeting flexibility
 
+You can check the [API documentation](hashibane.github.io/mediaktor).
+
 > In honor of our humble beginnings, the name reflects framework, which early versions were written for - Ktor.
 
 ## Contents
@@ -31,6 +33,7 @@ The key differences from other mediator projects include:
         - [4.1 Bare (no DI)](#41-bare-no-di)
         - [4.2 Koin](#42-koin-integration)
     - [5. Usage tips](#5-usage-tips)
+    - [6. Contributions](#6-contributions)
 ---
 
 ## 1. Install
@@ -353,3 +356,13 @@ should use `REQEST_MATCH` target.
 
 Using MediaKtor with DI framework is the recommended way. Otherwise, you will need to track handler classes names and
 implementation details that are usually hidden.
+
+## 6. Contributions
+
+Thank you for your work <3
+
+<a href="https://github.com/Hashibane/MediaKtor/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Hashibane/MediaKtor"/>
+</a>
+
+Special thanks to [codringher](https://github.com/codringher) for initial feature suggestions and review.

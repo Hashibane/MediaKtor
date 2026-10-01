@@ -11,7 +11,7 @@ The key differences from other mediator projects include:
 - Code generation (no reflection)
 - Pipeline order and targeting flexibility
 
-You can check the [API documentation](hashibane.github.io/mediaktor).
+You can check the [API documentation](hashibane.github.io/MediaKtor/).
 
 > In honor of our humble beginnings, the name reflects framework, which early versions were written for - Ktor.
 

@@ -17,7 +17,7 @@ ksp-api = "2.3.12"
 poet = "2.4.0"
 mock = "1.14.11"
 maven-publish = "0.37.0"
-logging = "7.0.3"
+logging = "8.0.4"
 
 [libraries]
 maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "maven-publish" }

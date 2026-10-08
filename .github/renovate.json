@@ -1,0 +1,28 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "packageRules": [
+    {
+      "matchPackageNames": ["*logging*", "*mock*"],
+      "groupName": "Disable test dependencies",
+      "enabled": false
+    },
+    {
+      "matchPackageNames": ["*ktor*", "*kotlinx*", "*logback*"],
+      "groupName": "Only major versions for samples",
+      "matchUpdateTypes": [
+        "major"
+      ]
+    },
+    {
+      "matchPackageNames": ["*"],
+      "groupName": "Only minor versions and patches",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    }
+  ]
+}

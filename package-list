@@ -1,0 +1,9 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+
+module:mediaktor-core
+mediaktor.core.annotations
+mediaktor.core.exceptions
+mediaktor.core.interfaces
+module:mediaktor-koin
+mediaktor.koin

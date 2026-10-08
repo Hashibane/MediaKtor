@@ -1,5 +1,5 @@
-import annotations.NotificationParallel
-import annotations.PipelineTarget
+import mediaktor.core.annotations.NotificationParallel
+import mediaktor.core.annotations.PipelineTarget
 import testUtils.classDeclaration
 import com.google.devtools.ksp.processing.Resolver
 import com.google.devtools.ksp.symbol.*
@@ -89,9 +89,9 @@ class MediatorTests {
 
         val generatedCode = generateStringOutput(2) {
             val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
             RequestHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
@@ -162,9 +162,9 @@ class MediatorTests {
 
         val generatedCode = generateStringOutput(2) {
             val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior") } returns sequenceOf()
 
             NotificationHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
             NotificationHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
@@ -248,9 +248,9 @@ class MediatorTests {
 
         val generatedCode = generateStringOutput(2) {
             val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior") } returns sequenceOf()
 
             NotificationHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
             NotificationHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
@@ -334,9 +334,9 @@ class MediatorTests {
 
         val generatedCode = generateStringOutput(2) {
             val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior") } returns sequenceOf()
 
             NotificationHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
             NotificationHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
@@ -761,9 +761,9 @@ class MediatorTests {
 
         val generatedCode = generateStringOutput(8) {
             val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
             RequestHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
@@ -1382,9 +1382,9 @@ class MediatorTests {
 
         val generatedCode = generateStringOutput(11) {
             val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
             RequestHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)
@@ -1858,9 +1858,9 @@ class MediatorTests {
 
         val generatedCode = generateStringOutput(7) {
             val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(handlerOne, Unit)
             RequestHandlerVisitor().visitFunctionDeclaration(handlerTwo, Unit)

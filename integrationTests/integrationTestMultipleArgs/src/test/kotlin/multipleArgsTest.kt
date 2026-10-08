@@ -1,9 +1,9 @@
-import annotations.NotificationHandler
-import annotations.PipelineBehavior
-import annotations.RequestHandler
-import interfaces.Mediator
+import mediaktor.core.annotations.NotificationHandler
+import mediaktor.core.annotations.PipelineBehavior
+import mediaktor.core.annotations.RequestHandler
+import mediaktor.core.interfaces.Mediator
 import kotlinx.coroutines.runBlocking
-import mediaktorKoin.provideMediator
+import mediaktor.koin.provideMediator
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module

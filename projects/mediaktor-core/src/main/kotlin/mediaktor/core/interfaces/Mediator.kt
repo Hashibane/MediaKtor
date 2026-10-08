@@ -1,4 +1,4 @@
-package interfaces
+package mediaktor.core.interfaces
 
 /**
  * Mediator interface for use in DI frameworks. The actual implementation is generated

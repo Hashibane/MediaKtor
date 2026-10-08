@@ -1,6 +1,6 @@
 package preprocessing.metadata
 
-import annotations.HandlerLifespan
+import mediaktor.core.annotations.HandlerLifespan
 import com.google.devtools.ksp.symbol.KSFile
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.MemberName

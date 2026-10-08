@@ -305,8 +305,8 @@ In bare version, you use generated names without any abstractions. The generated
 #### Example
 
 ```kotlin
-import Mediator__Impl.Mediator__Impl
-import annotations.RequestHandler
+import mediaktor.core.Mediator__Impl
+import mediaktor.core.annotations.RequestHandler
 
 @RequestHandler
 fun testHandler(arg: Int): String = arg.toString()

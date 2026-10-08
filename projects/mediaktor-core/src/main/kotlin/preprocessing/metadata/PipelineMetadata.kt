@@ -1,6 +1,6 @@
 package preprocessing.metadata
 
-import annotations.PipelineTarget
+import mediaktor.core.annotations.PipelineTarget
 import com.squareup.kotlinpoet.TypeName
 
 data class PipelineMetadata(val outputType: TypeName, val order: Int, val target: PipelineTarget) : AdditionalData

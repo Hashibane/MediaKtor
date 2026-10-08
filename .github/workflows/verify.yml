@@ -26,3 +26,6 @@ jobs:
 
       - name: Verify with kover
         run: ./gradlew koverVerify
+
+      - name: Check if samples compile
+        run: ./gradlew :samples:ktorSample:build

@@ -1,7 +1,7 @@
 package handlers
 
-import annotations.PipelineBehavior
-import annotations.PipelineTarget
+import mediaktor.core.annotations.PipelineBehavior
+import mediaktor.core.annotations.PipelineTarget
 import database.ItemModel
 import io.ktor.util.logging.*
 

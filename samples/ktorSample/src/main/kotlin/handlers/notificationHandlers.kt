@@ -1,6 +1,6 @@
 package handlers
 
-import annotations.NotificationHandler
+import mediaktor.core.annotations.NotificationHandler
 import database.FakeDatabase
 import io.ktor.util.logging.*
 

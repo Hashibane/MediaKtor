@@ -1,4 +1,4 @@
-import annotations.HandlerLifespan
+import mediaktor.core.annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.Resolver
 import testUtils.functionDeclaration
 import testUtils.generateStringOutput
@@ -26,9 +26,9 @@ class KoinTests {
 
         val generatedCode = generateStringOutput(1, { codeGenerator, logger -> KoinProcessor(codeGenerator, logger) }) {
             val resolver = mockkClass(Resolver::class)
-            every { resolver.getSymbolsWithAnnotation("annotations.RequestHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.NotificationHandler") } returns sequenceOf()
-            every { resolver.getSymbolsWithAnnotation("annotations.PipelineBehavior") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler") } returns sequenceOf()
+            every { resolver.getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior") } returns sequenceOf()
 
             RequestHandlerVisitor().visitFunctionDeclaration(funOneDecl, Unit)
             RequestHandlerVisitor().visitFunctionDeclaration(funTwoDecl, Unit)
@@ -36,10 +36,9 @@ class KoinTests {
         }
 
         val mediatorClassName = "Mediator__Impl"
-        val mediatorInterface = "interfaces.Mediator"
+        val mediatorInterface = "mediaktor.core.interfaces.Mediator"
         val diCode = generatedCode.last()
-        println(diCode)
-        assert(diCode.contains("package mediaktorKoin"))
+        assert(diCode.contains("package mediaktor.koin"))
         assert(diCode.contains("fun Module.provideMediator()"))
         assert(diCode.contains("singleOf(::Handler__${packageName}__${handlerOneName})"))
         assert(diCode.contains("factoryOf(::Handler__${packageName}__${handlerTwoName})"))

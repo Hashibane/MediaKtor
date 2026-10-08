@@ -1,9 +1,9 @@
 package preprocessing.processors
 
-import annotations.HandlerLifespan
-import annotations.NotificationParallel
-import annotations.PipelineBehavior
-import annotations.PipelineTarget
+import mediaktor.core.annotations.HandlerLifespan
+import mediaktor.core.annotations.NotificationParallel
+import mediaktor.core.annotations.PipelineBehavior
+import mediaktor.core.annotations.PipelineTarget
 import com.google.devtools.ksp.symbol.KSClassDeclaration
 import com.google.devtools.ksp.symbol.KSFunctionDeclaration
 import com.google.devtools.ksp.symbol.KSType
@@ -102,8 +102,8 @@ internal fun addMetadata(handlerRegistry: MutableMap<TypeName, MutableList<Handl
     val packageName = function.packageName.asString()
 
     val annotationClassName = when (handlerDescriptor) {
-        HandlerDescriptor.REQUEST_HANDLER -> annotations.RequestHandler::class.simpleName!!
-        HandlerDescriptor.NOTIFICATION_HANDLER -> annotations.NotificationHandler::class.simpleName!!
+        HandlerDescriptor.REQUEST_HANDLER -> mediaktor.core.annotations.RequestHandler::class.simpleName!!
+        HandlerDescriptor.NOTIFICATION_HANDLER -> mediaktor.core.annotations.NotificationHandler::class.simpleName!!
         HandlerDescriptor.PIPELINE_HANDLER -> PipelineBehavior::class.simpleName!!
     }
 

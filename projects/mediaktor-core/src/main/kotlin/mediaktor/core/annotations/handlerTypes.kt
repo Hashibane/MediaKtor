@@ -1,7 +1,7 @@
-package annotations
+package mediaktor.core.annotations
 
 /**
- * Request handlers are called on [interfaces.Mediator.send].
+ * Request handlers are called on [mediaktor.core.interfaces.Mediator.send].
  * Only one request handler is allowed for each request type. Subtypes of the
  * request type are also handled if there is no other more specific request handler for the type.
  *
@@ -11,7 +11,7 @@ package annotations
 annotation class RequestHandler(val lifespan: HandlerLifespan = HandlerLifespan.SINGLE)
 
 /**
- * Notification handlers are called on [interfaces.Mediator.publish].
+ * Notification handlers are called on [mediaktor.core.interfaces.Mediator.publish].
  * Many notification handlers are allowed for each request type. Subtypes of the
  * request type are also handled if there are no other more specific notification handlers for the type.
  *
@@ -26,7 +26,7 @@ annotation class NotificationHandler(val lifespan: HandlerLifespan = HandlerLife
                                      val order: Int = Int.MIN_VALUE)
 
 /**
- * Pipeline handlers may be called on [interfaces.Mediator.send] or [interfaces.Mediator.publish].
+ * Pipeline handlers may be called on [mediaktor.core.interfaces.Mediator.send] or [mediaktor.core.interfaces.Mediator.publish].
  * There may be many pipelines for each request type. A pipeline handler will also intercept the subtypes
  * of the request type.
  *

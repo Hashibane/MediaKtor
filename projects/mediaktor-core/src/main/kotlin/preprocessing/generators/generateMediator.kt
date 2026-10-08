@@ -1,7 +1,7 @@
 package preprocessing.generators
 
-import annotations.NotificationParallel
-import annotations.PipelineTarget
+import mediaktor.core.annotations.NotificationParallel
+import mediaktor.core.annotations.PipelineTarget
 import com.google.devtools.ksp.processing.KSPLogger
 import com.squareup.kotlinpoet.*
 import preprocessing.metadata.HandlerType
@@ -12,12 +12,12 @@ import kotlin.collections.forEach
 
 internal data class MediatorMetadata(val className: ClassName, val fileSpec: FileSpec)
 
-internal fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<preprocessing.metadata.HandlerType>>,
-                     typeSorter: Comparator<TypeName>, logger: KSPLogger
+internal fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<HandlerType>>,
+                              typeSorter: Comparator<TypeName>, logger: KSPLogger
 ): MediatorMetadata? {
     if (handlerRegistry.isEmpty()) return null
 
-    val superInterface = ClassName("interfaces", "Mediator")
+    val superInterface = ClassName("mediaktor.core.interfaces", "Mediator")
 
     val mediatorClassName = "Mediator__Impl"
     val mediatorBuilder = TypeSpec.classBuilder(mediatorClassName)
@@ -177,13 +177,14 @@ internal fun generateMediator(handlerRegistry: MutableMap<TypeName, MutableList<
 
     mediatorBuilder.addFunction(publishBuilder.build())
 
+    val packageName = "mediaktor.core"
     val mediatorClass = mediatorBuilder.build()
-    val fileSpec = FileSpec.builder(mediatorClassName, mediatorClassName)
+    val fileSpec = FileSpec.builder(packageName, mediatorClassName)
         .addType(mediatorClass)
         .build()
 
     return MediatorMetadata(
-        ClassName(mediatorClassName, mediatorClassName),
+        ClassName(packageName, mediatorClassName),
         fileSpec
     )
 }

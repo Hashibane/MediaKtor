@@ -1,6 +1,6 @@
 package preprocessing.processors
 
-import annotations.PipelineTarget
+import mediaktor.core.annotations.PipelineTarget
 import com.squareup.kotlinpoet.ANY
 import com.squareup.kotlinpoet.TypeName
 import com.squareup.kotlinpoet.UNIT

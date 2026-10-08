@@ -1,7 +1,7 @@
 package handlers
 
-import annotations.HandlerLifespan
-import annotations.RequestHandler
+import mediaktor.core.annotations.HandlerLifespan
+import mediaktor.core.annotations.RequestHandler
 import database.ItemModel
 import repositories.ReadRepository
 import repositories.WriteRepository

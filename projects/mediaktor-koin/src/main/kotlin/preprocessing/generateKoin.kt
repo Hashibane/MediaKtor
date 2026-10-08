@@ -1,6 +1,6 @@
 package preprocessing
 
-import annotations.HandlerLifespan
+import mediaktor.core.annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.squareup.kotlinpoet.ClassName
 import com.squareup.kotlinpoet.FileSpec
@@ -30,7 +30,7 @@ internal fun CodeGenerator.generateKoin(handlers: List<HandlerType>, mediator: C
         dependencyConfig.addStatement("%M(%L)", lifecycle, className.constructorReference())
     }
 
-    val mediatorInterface = MemberName("interfaces", "Mediator")
+    val mediatorInterface = MemberName("mediaktor.core.interfaces", "Mediator")
     val bind = MemberName("org.koin.dsl", "bind")
     val itName = "params"
 
@@ -38,7 +38,7 @@ internal fun CodeGenerator.generateKoin(handlers: List<HandlerType>, mediator: C
         single, itName, mediator, bind, mediatorInterface)
 
 
-    val fileSpec = FileSpec.builder("mediaktorKoin", "diSetup")
+    val fileSpec = FileSpec.builder("mediaktor.koin", "diSetup")
         .addFunction(dependencyConfig.build())
         .build()
 

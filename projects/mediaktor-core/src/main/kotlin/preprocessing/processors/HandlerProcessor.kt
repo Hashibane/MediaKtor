@@ -37,18 +37,18 @@ abstract class HandlerProcessor(open val codeGenerator: CodeGenerator, open val 
 
     override fun process(resolver: Resolver): List<KSAnnotated> {
         resolver
-            .getSymbolsWithAnnotation("annotations.RequestHandler")
-            .filter { it.validate() }
+            .getSymbolsWithAnnotation("mediaktor.core.annotations.RequestHandler")
+            .filter { it.validate(enableNewFeatures = false) }
             .forEach { it.accept(RequestHandlerVisitor(), Unit) }
 
         resolver
-            .getSymbolsWithAnnotation("annotations.NotificationHandler")
-            .filter { it.validate() }
+            .getSymbolsWithAnnotation("mediaktor.core.annotations.NotificationHandler")
+            .filter { it.validate(enableNewFeatures = false) }
             .forEach { it.accept(NotificationHandlerVisitor(), Unit) }
 
         resolver
-            .getSymbolsWithAnnotation("annotations.PipelineBehavior")
-            .filter { it.validate() }
+            .getSymbolsWithAnnotation("mediaktor.core.annotations.PipelineBehavior")
+            .filter { it.validate(enableNewFeatures = false) }
             .forEach { it.accept(PipelineHandlerVisitor(), Unit) }
 
         handlerMetadata.verifyMetadata()

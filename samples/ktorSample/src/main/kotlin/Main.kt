@@ -4,13 +4,13 @@ import handlers.BackupEvent
 import handlers.Permission
 import handlers.ReadInventoryQuery
 import handlers.WriteInventoryCommand
-import interfaces.Mediator
+import mediaktor.core.interfaces.Mediator
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.netty.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
-import mediaktorKoin.provideMediator
+import mediaktor.koin.provideMediator
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
 import org.koin.ktor.ext.inject

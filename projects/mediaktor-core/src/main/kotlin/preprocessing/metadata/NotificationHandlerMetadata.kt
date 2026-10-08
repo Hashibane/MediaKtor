@@ -1,5 +1,5 @@
 package preprocessing.metadata
 
-import annotations.NotificationParallel
+import mediaktor.core.annotations.NotificationParallel
 
 data class NotificationHandlerMetadata(val parallel: NotificationParallel, val order: Int) : AdditionalData

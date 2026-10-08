@@ -1,6 +1,6 @@
 package testUtils
 
-import annotations.HandlerLifespan
+import mediaktor.core.annotations.HandlerLifespan
 import com.google.devtools.ksp.processing.CodeGenerator
 import com.google.devtools.ksp.processing.KSPLogger
 import com.google.devtools.ksp.symbol.ClassKind
@@ -68,8 +68,8 @@ fun KSFunctionDeclaration.setupHandler(handlerName: String,
         annotationType {
             type {
                 declaration {
-                    packageName { "annotations" }
-                    qualifiedName { "annotations.$name" }
+                    packageName { "mediaktor.core.annotations" }
+                    qualifiedName { "mediaktor.core.annotations.$name" }
                 }
             }
         }
@@ -79,14 +79,14 @@ fun KSFunctionDeclaration.setupHandler(handlerName: String,
 
             value {
                 classDeclaration {
-                    packageName { "annotations" }
-                    qualifiedName { "annotations.HandlerLifespan.$lifespan" }
+                    packageName { "mediaktor.core.annotations" }
+                    qualifiedName { "mediaktor.core.annotations.HandlerLifespan.$lifespan" }
                     classKind { ClassKind.ENUM_ENTRY }
 
                     every { this@classDeclaration.toString() } returns "HandlerLifespan.$lifespan"
                     parentClassDeclaration {
-                        packageName { "annotations" }
-                        qualifiedName { "annotations.HandlerLifespan" }
+                        packageName { "mediaktor.core.annotations" }
+                        qualifiedName { "mediaktor.core.annotations.HandlerLifespan" }
                         classKind { ClassKind.ENUM_CLASS }
                     }
                 }
@@ -98,14 +98,14 @@ fun KSFunctionDeclaration.setupHandler(handlerName: String,
 
                 value {
                     classDeclaration {
-                        packageName { "annotations" }
-                        qualifiedName { "annotations.NotificationParallel.${additionalData.parallel}" }
+                        packageName { "mediaktor.core.annotations" }
+                        qualifiedName { "mediaktor.core.annotations.NotificationParallel.${additionalData.parallel}" }
                         classKind { ClassKind.ENUM_ENTRY }
 
                         every { this@classDeclaration.toString() } returns "NotificationParallel.${additionalData.parallel}"
                         parentClassDeclaration {
-                            packageName { "annotations" }
-                            qualifiedName { "annotations.NotificationParallel" }
+                            packageName { "mediaktor.core.annotations" }
+                            qualifiedName { "mediaktor.core.annotations.NotificationParallel" }
                             classKind { ClassKind.ENUM_CLASS }
                         }
                     }
@@ -127,14 +127,14 @@ fun KSFunctionDeclaration.setupHandler(handlerName: String,
 
                 value {
                     classDeclaration {
-                        packageName { "annotations" }
-                        qualifiedName { "annotations.PipelineTarget.${additionalData.target}" }
+                        packageName { "mediaktor.core.annotations" }
+                        qualifiedName { "mediaktor.core.annotations.PipelineTarget.${additionalData.target}" }
                         classKind { ClassKind.ENUM_ENTRY }
 
                         every { this@classDeclaration.toString() } returns "PipelineTarget.${additionalData.target}"
                         parentClassDeclaration {
-                            packageName { "annotations" }
-                            qualifiedName { "annotations.PipelineTarget" }
+                            packageName { "mediaktor.core.annotations" }
+                            qualifiedName { "mediaktor.core.annotations.PipelineTarget" }
                             classKind { ClassKind.ENUM_CLASS }
                         }
                     }

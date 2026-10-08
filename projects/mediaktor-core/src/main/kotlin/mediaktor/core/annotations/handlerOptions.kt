@@ -1,4 +1,4 @@
-package annotations
+package mediaktor.core.annotations
 
 /** Determines how many times handler is constructed.
  *
@@ -51,7 +51,7 @@ enum class PipelineTarget(val isStrict: Boolean) {
     /**
      * [BOTH] pipelines are applied to request and notification handlers matching the request type and its subtypes.
      * Return type of the pipeline should be `Any?` and the `next` parameter type should be `suspend () -> Any?`.
-     * For notification handlers, the returned value is not passed to next pipelines or [interfaces.Mediator.publish] method.
+     * For notification handlers, the returned value is not passed to next pipelines or [mediaktor.core.interfaces.Mediator.publish] method.
      */
     BOTH(false)
 }

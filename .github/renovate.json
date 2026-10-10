@@ -5,23 +5,30 @@
   ],
   "packageRules": [
     {
+      "matchPackageNames": ["*"],
+      "groupName": "minor versions and patches",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ]
+    },
+    {
       "matchPackageNames": ["*logging*", "*mock*"],
-      "groupName": "Disable test dependencies",
+      "groupName": "tests",
       "enabled": false
     },
     {
-      "matchPackageNames": ["*ktor*", "*kotlinx*", "*logback*"],
-      "groupName": "Only major versions for samples",
+      "matchPackageNames": ["*ktor*", "*kotlinx*", "*logback*", "*serialization*"],
+      "groupName": "samples",
       "matchUpdateTypes": [
         "major"
       ]
     },
     {
-      "matchPackageNames": ["*"],
-      "groupName": "Only minor versions and patches",
+      "matchPackageNames": ["*gradle*", "*kotlin.jvm*", "*jdk*"],
+      "groupName": "kotlin/jvm/gradle",
       "matchUpdateTypes": [
-        "minor",
-        "patch"
+        "major"
       ]
     }
   ]

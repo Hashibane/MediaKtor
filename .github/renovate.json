@@ -19,17 +19,21 @@
     },
     {
       "matchPackageNames": ["*ktor*", "*kotlinx*", "*logback*", "*serialization*"],
-      "groupName": "samples",
+      "groupName": "samples majors",
       "matchUpdateTypes": [
-        "major"
-      ]
+        "minor",
+        "patch"
+      ],
+      "enabled": false
     },
     {
       "matchPackageNames": ["*gradle*", "*kotlin.jvm*", "*jdk*"],
-      "groupName": "kotlin/jvm/gradle",
+      "groupName": "kotlin/jvm/gradle majors",
       "matchUpdateTypes": [
-        "major"
-      ]
+        "minor",
+        "patch"
+      ],
+      "enabled": false
     }
   ]
 }

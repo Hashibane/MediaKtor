@@ -13,6 +13,7 @@ dependencies {
     // Add a dependency on the Kotlin Gradle plugin, so that convention plugins can apply it.
     implementation(libs.kotlinGradlePlugin)
     implementation(libs.kotlinJvm)
+    implementation(libs.kotlinMultiplatform)
     implementation(libs.ksp.api)
     implementation(libs.ksp)
     implementation(libs.dokka)

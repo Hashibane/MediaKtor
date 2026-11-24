@@ -9,7 +9,7 @@ kotlinxSerializationJSON = "1.11.0"
 kotlinxCoroutines = "1.11.0"
 ktor = "3.6.0"
 logback = "1.4.14"
-koin-bom = "4.2.2"
+koin = "4.2.2"
 dokka = "2.2.0"
 kover = "0.9.11"
 ksp = "2.3.12"
@@ -18,6 +18,8 @@ poet = "2.4.0"
 mock = "1.14.11"
 maven-publish = "0.37.0"
 logging = "7.0.3"
+kmp = "2.4.21"
+kotlin-test = "2.4.21"
 
 [libraries]
 maven-publish = { module = "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin", version.ref = "maven-publish" }
@@ -32,9 +34,8 @@ ktor-server-content-negotiation = { module = "io.ktor:ktor-server-content-negoti
 ktor-server-netty = { module = "io.ktor:ktor-server-netty", version.ref = "ktor" }
 ktor-server-config-yaml = { module = "io.ktor:ktor-server-config-yaml", version.ref = "ktor" }
 logback-classic = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
-koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
-koin-core = { module = "io.insert-koin:koin-core" }
-koin-ktor = { module = "io.insert-koin:koin-ktor" }
+koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+koin-ktor = { module = "io.insert-koin:koin-ktor", version.ref = "koin" }
 poet = { module = "com.squareup:kotlinpoet", version.ref = "poet" }
 poet-ksp = { module = "com.squareup:kotlinpoet-ksp", version.ref = "poet" }
 ksp = { module = "com.google.devtools.ksp:com.google.devtools.ksp.gradle.plugin", version.ref = "ksp" }
@@ -44,6 +45,8 @@ dokka = { module = "org.jetbrains.dokka:dokka-gradle-plugin", version.ref = "dok
 dokka-javadoc = { module = "org.jetbrains.dokka-javadoc:org.jetbrains.dokka-javadoc.gradle.plugin", version.ref = "dokka" }
 kover = { module = "org.jetbrains.kotlinx:kover-gradle-plugin", version.ref = "kover" }
 logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "logging" }
+kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin-test" }
+kotlinMultiplatform = { module = "org.jetbrains.kotlin.multiplatform:org.jetbrains.kotlin.multiplatform.gradle.plugin", version.ref = "kmp"}
 
 # Libraries can be bundled together for easier import
 [bundles]

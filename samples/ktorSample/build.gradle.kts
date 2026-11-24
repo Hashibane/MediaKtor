@@ -23,6 +23,6 @@ dependencies {
     implementation(libs.ktor.server.netty)
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.logback.classic)
-    implementation(platform(libs.koin.bom))
+    // Note: you can use koin BOM here
     implementation(libs.koin.ktor)
 }

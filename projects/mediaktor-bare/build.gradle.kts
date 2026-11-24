@@ -1,17 +1,22 @@
 plugins {
     id("buildsrc.convention.publish")
-    id("buildsrc.convention.kotlin-jvm")
+    id("buildsrc.convention.kotlin-kmp")
 }
 
-dependencies {
-    testImplementation(kotlin("test"))
-    testImplementation(libs.mock)
-    testImplementation(libs.logging)
-    testImplementation(project(":projects:mediaktor-testing"))
-    testImplementation(project(":projects:mediaktor-core"))
-
-    implementation(project(":projects:mediaktor-core"))
-    implementation(libs.ksp.api)
-    implementation(libs.poet)
-    implementation(libs.poet.ksp)
+kotlin {
+    sourceSets {
+        jvmMain.dependencies {
+            implementation(project(":projects:mediaktor-core"))
+            implementation(libs.ksp.api)
+            implementation(libs.poet)
+            implementation(libs.poet.ksp)
+        }
+        jvmTest.dependencies {
+            implementation(libs.mock)
+            implementation(libs.logging)
+            implementation(libs.kotlin.test)
+            implementation(project(":projects:mediaktor-testing"))
+            implementation(project(":projects:mediaktor-core"))
+        }
+    }
 }

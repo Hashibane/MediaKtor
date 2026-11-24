@@ -8,6 +8,5 @@ dependencies {
     testImplementation(project(":projects:mediaktor-koin"))
     testImplementation(project(":projects:mediaktor-core"))
     testImplementation(libs.kotlinxCoroutines)
-    testImplementation(platform(libs.koin.bom))
     testImplementation(libs.koin.core)
 }
